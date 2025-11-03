@@ -579,7 +579,8 @@ async function editNovel(novelId) {
         document.getElementById('editAuthor').value = novel.author_name || '';
         document.getElementById('editEditor').value = novel.editor_name || '';
         document.getElementById('editChapterCount').value = novel.chapter_count || 0;
-        document.getElementById('editStatus').value = novel.status || 'ongoing';
+        document.getElementById('editExtraChapters').value = novel.extra_chapters || 0;
+        document.getElementById('editStatus').value = novel.status || 'Đang ra';
         document.getElementById('editCoverImage').value = novel.cover_image_url || '';
         document.getElementById('editNovelUrl').value = novel.novel_url || '';
         document.getElementById('editSummary').value = novel.summary || '';
@@ -638,6 +639,7 @@ document.getElementById('editNovelForm').addEventListener('submit', async (e) =>
         author_name: document.getElementById('editAuthor').value,
         editor_name: document.getElementById('editEditor').value || null,
         chapter_count: parseInt(document.getElementById('editChapterCount').value) || 0,
+        extra_chapters: parseInt(document.getElementById('editExtraChapters').value) || 0,
         status: document.getElementById('editStatus').value,
         cover_image_url: document.getElementById('editCoverImage').value || null,
         novel_url: document.getElementById('editNovelUrl').value || null,

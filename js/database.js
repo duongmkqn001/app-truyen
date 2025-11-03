@@ -652,6 +652,9 @@ const db = {
                 const tagIds = updateData.tag_ids;
                 delete updateData.tag_ids;
 
+                // Log what we're trying to update
+                console.log('Updating novel with data:', updateData);
+
                 // Update novel data
                 const { data, error } = await supabaseClient
                     .from('novels')
@@ -660,7 +663,10 @@ const db = {
                     .select()
                     .single();
 
-                if (error) throw error;
+                if (error) {
+                    console.error('Supabase update error details:', error);
+                    throw error;
+                }
 
                 // Update tags if provided
                 if (tagIds !== undefined) {
@@ -691,6 +697,7 @@ const db = {
                 return { success: true, data };
             } catch (error) {
                 console.error('Update novel error:', error);
+                console.error('Full error object:', JSON.stringify(error, null, 2));
                 return { success: false, error: error.message };
             }
         }
