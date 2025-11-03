@@ -55,9 +55,10 @@ async function initAuth() {
     
     userMenu.innerHTML = `
         <div class="flex items-center gap-3">
-            <span class="text-gray-700">👤 ${profile?.username || user.email}</span>
+            <a href="profile.html" class="text-gray-700 hover:text-green-600">👤 ${profile?.username || user.email}</a>
             ${UIComponents.createRoleBadge(profile?.role || 'reader')}
-            ${profile?.role === 'admin' ? '<a href="admin.html" class="text-blue-600 hover:underline">Admin</a>' : ''}
+            ${profile?.role === 'admin' ? '<a href="admin.html" class="text-blue-600 hover:underline">Quản trị</a>' : ''}
+            ${profile?.role === 'admin' ? '<a href="admin-users.html" class="text-purple-600 hover:underline">Người dùng</a>' : ''}
             <button onclick="logout()" class="text-red-600 hover:underline">Đăng xuất</button>
         </div>
     `;
@@ -229,6 +230,7 @@ function initManualUpload() {
             author_name: formData.get('author_name'),
             editor_name: formData.get('editor_name') || null,
             chapter_count: parseInt(formData.get('chapter_count')) || 0,
+            extra_chapters: parseInt(formData.get('extra_chapters')) || 0,
             summary: formData.get('summary') || null,
             novel_url: formData.get('novel_url') || null,
             cover_image_url: formData.get('cover_image_url') || null,
@@ -273,12 +275,13 @@ function initCsvUpload() {
 }
 
 function downloadCsvTemplate() {
-    const headers = ['title', 'author_name', 'editor_name', 'chapter_count', 'summary', 'novel_url', 'cover_image_url', 'status', 'tags'];
+    const headers = ['title', 'author_name', 'editor_name', 'chapter_count', 'extra_chapters', 'summary', 'novel_url', 'cover_image_url', 'status', 'tags'];
     const sampleRow = [
         'Tên truyện mẫu',
         'Tác giả',
-        'Người dịch',
+        'Editor/Dịch giả',
         '100',
+        '5',
         'Đây là tóm tắt truyện. Có thể có dấu phẩy, dấu ngoặc kép "như thế này"',
         'https://example.com/novel',
         'https://example.com/cover.jpg',
@@ -400,6 +403,13 @@ function parseCsv(text) {
             row.chapter_count = parseInt(row.chapter_count) || 0;
         } else {
             row.chapter_count = 0;
+        }
+
+        // Convert extra_chapters to number
+        if (row.extra_chapters) {
+            row.extra_chapters = parseInt(row.extra_chapters) || 0;
+        } else {
+            row.extra_chapters = 0;
         }
 
         // Parse and validate tags if provided

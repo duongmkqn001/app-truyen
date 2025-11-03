@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function initAuth() {
     const user = await db.auth.getCurrentUser();
     const userMenu = document.getElementById('userMenu');
-    
+
     if (!user) {
         userMenu.innerHTML = `
             <a href="login.html" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
@@ -38,14 +38,15 @@ async function initAuth() {
         `;
         return;
     }
-    
+
     const profile = await db.auth.getUserProfile(user.id);
-    
+
     userMenu.innerHTML = `
         <div class="flex items-center gap-3">
-            <span class="text-gray-700">👤 ${profile?.username || user.email}</span>
+            <a href="profile.html" class="text-gray-700 hover:text-green-600">👤 ${profile?.username || user.email}</a>
             ${UIComponents.createRoleBadge(profile?.role || 'reader')}
-            ${profile?.role === 'admin' ? '<a href="admin.html" class="text-blue-600 hover:underline">Admin</a>' : ''}
+            ${profile?.role === 'admin' ? '<a href="admin.html" class="text-blue-600 hover:underline">Quản trị</a>' : ''}
+            ${profile?.role === 'admin' ? '<a href="admin-users.html" class="text-purple-600 hover:underline">Người dùng</a>' : ''}
             <button onclick="logout()" class="text-red-600 hover:underline">Đăng xuất</button>
         </div>
     `;

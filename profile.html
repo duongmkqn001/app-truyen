@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tài khoản của tôi - App Truyện</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <a href="index.html" class="text-2xl font-bold text-green-600">📚 App Truyện</a>
+                
+                <div class="flex items-center gap-4">
+                    <a href="index.html" class="text-gray-700 hover:text-green-600">Trang chủ</a>
+                    <a href="authors.html" class="text-gray-700 hover:text-green-600">Tác giả</a>
+                    <a href="search-by-tag.html" class="text-gray-700 hover:text-green-600">Tìm theo thể loại</a>
+                    <a href="ranking.html" class="text-gray-700 hover:text-green-600">Bảng xếp hạng</a>
+                    <a href="upload.html" class="text-gray-700 hover:text-green-600">Tải lên</a>
+                    
+                    <!-- User Menu -->
+                    <div id="userMenu"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl font-bold text-gray-800 mb-6">👤 Tài khoản của tôi</h1>
+            
+            <!-- Account Information Card -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">📋 Thông tin tài khoản</h2>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b pb-3">
+                        <span class="text-gray-600 font-medium">Tên người dùng:</span>
+                        <span id="profileUsername" class="text-gray-900 font-semibold"></span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between border-b pb-3">
+                        <span class="text-gray-600 font-medium">Email:</span>
+                        <span id="profileEmail" class="text-gray-900"></span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between border-b pb-3">
+                        <span class="text-gray-600 font-medium">Vai trò hiện tại:</span>
+                        <span id="profileRole"></span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between border-b pb-3">
+                        <span class="text-gray-600 font-medium">Trạng thái:</span>
+                        <span id="profileStatus"></span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600 font-medium">Ngày đăng ký:</span>
+                        <span id="profileCreatedAt" class="text-gray-900"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role Upgrade Section -->
+            <div id="roleUpgradeSection" class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">⬆️ Nâng cấp vai trò</h2>
+                
+                <!-- Role Explanation -->
+                <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 mb-4">
+                    <h3 class="font-bold text-blue-900 mb-2">Các vai trò trong hệ thống:</h3>
+                    <ul class="text-sm text-blue-800 space-y-1">
+                        <li>• <strong>Chờ duyệt (pending_approval)</strong>: Tài khoản mới, chỉ xem được nội dung</li>
+                        <li>• <strong>Thành viên (member)</strong>: Có thể bình luận, đánh giá, đề cử truyện</li>
+                        <li>• <strong>Cộng tác viên (contributor)</strong>: Có thể tải lên truyện, chỉnh sửa truyện của mình</li>
+                        <li>• <strong>Quản trị viên (admin)</strong>: Toàn quyền quản lý hệ thống</li>
+                    </ul>
+                </div>
+
+                <!-- Request Form -->
+                <div id="requestForm">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Vai trò muốn nâng cấp:</label>
+                        <select id="requestedRole" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            <option value="">-- Chọn vai trò --</option>
+                            <option value="member">Thành viên (Member)</option>
+                            <option value="contributor">Cộng tác viên (Contributor)</option>
+                            <option value="admin">Quản trị viên (Admin)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Lý do yêu cầu nâng cấp:</label>
+                        <textarea id="requestMessage" rows="4"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            placeholder="Vui lòng cho biết lý do bạn muốn nâng cấp vai trò..."></textarea>
+                    </div>
+
+                    <!-- Verification fields (shown for contributor requests) -->
+                    <div id="verificationFields" class="hidden space-y-4 mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div class="text-sm text-yellow-800 mb-3">
+                            <strong>⚠️ Yêu cầu xác minh cho Cộng tác viên:</strong>
+                            <p class="mt-1">Vui lòng cung cấp link website/Wattpad và ảnh chứng minh bạn sở hữu tài khoản đó.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Link Website/Wattpad: <span class="text-red-500">*</span>
+                            </label>
+                            <input type="url" id="websiteUrl"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                placeholder="https://www.wattpad.com/user/yourname hoặc https://yourwebsite.com">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Link ảnh chứng minh: <span class="text-red-500">*</span>
+                            </label>
+                            <input type="url" id="proofImageUrl"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                placeholder="https://i.imgur.com/... (upload ảnh lên Imgur hoặc dịch vụ khác)">
+                            <p class="text-xs text-gray-500 mt-1">
+                                💡 Gợi ý: Chụp màn hình trang cài đặt tài khoản hoặc trang profile của bạn trên website/Wattpad
+                            </p>
+                        </div>
+                    </div>
+
+                    <button id="submitRequestBtn"
+                        class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+                        Gửi yêu cầu nâng cấp
+                    </button>
+                </div>
+            </div>
+
+            <!-- Request History -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">📜 Lịch sử yêu cầu</h2>
+                
+                <div id="requestsContainer">
+                    <div class="text-center py-8 text-gray-500">
+                        Đang tải...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg hidden transition-all">
+        <span id="toastMessage"></span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+</html>
+

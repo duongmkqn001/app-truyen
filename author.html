@@ -82,13 +82,18 @@
 
                             <!-- Logged in -->
                             <div id="loggedIn" class="hidden flex items-center gap-3">
-                                <span class="text-sm text-gray-600">Xin chào, <strong id="username"></strong></span>
+                                <a href="profile.html" class="text-sm text-gray-600 hover:text-green-600">
+                                    👤 <strong id="username"></strong>
+                                </a>
+                                <a id="adminLink" href="admin.html" class="hidden px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors">
+                                    Quản trị
+                                </a>
+                                <a id="adminUsersLink" href="admin-users.html" class="hidden px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-lg transition-colors">
+                                    Người dùng
+                                </a>
                                 <button id="logoutBtn" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition-colors">
                                     Đăng xuất
                                 </button>
-                                <a id="adminLink" href="admin.html" class="hidden px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors">
-                                    Quản trị
-                                </a>
                             </div>
                         </div>
                     </div>

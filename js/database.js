@@ -187,7 +187,7 @@ const db = {
             }
         },
 
-        // Reject/ban user (admin only)
+        // Ban user (admin only)
         async banUser(userId) {
             try {
                 const { data, error } = await supabaseClient
@@ -204,6 +204,27 @@ const db = {
                 return { success: true, data };
             } catch (error) {
                 console.error('Ban user error:', error);
+                return { success: false, error: error.message };
+            }
+        },
+
+        // Unban user (admin only)
+        async unbanUser(userId) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .update({
+                        is_banned: false,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', userId)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                return { success: true, data };
+            } catch (error) {
+                console.error('Unban user error:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -225,6 +246,23 @@ const db = {
                 return { success: true, data };
             } catch (error) {
                 console.error('Update user role error:', error);
+                return { success: false, error: error.message };
+            }
+        },
+
+        // Delete user (admin only)
+        async deleteUser(userId) {
+            try {
+                // First delete from users table (this will cascade to auth.users)
+                const { error } = await supabaseClient
+                    .from('users')
+                    .delete()
+                    .eq('id', userId);
+
+                if (error) throw error;
+                return { success: true };
+            } catch (error) {
+                console.error('Delete user error:', error);
                 return { success: false, error: error.message };
             }
         }
@@ -1075,6 +1113,144 @@ const db = {
                 return { success: true, data };
             } catch (error) {
                 console.error('Reject translator request error:', error);
+                return { success: false, error: error.message };
+            }
+        }
+    },
+
+    // =====================================================
+    // ROLE UPGRADE REQUESTS
+    // =====================================================
+
+    roleUpgradeRequests: {
+        // Create role upgrade request
+        async create(requestedRole, requestMessage, websiteUrl = null, proofImageUrl = null) {
+            try {
+                const user = await db.auth.getCurrentUser();
+                if (!user) throw new Error('Must be logged in');
+
+                const profile = await db.auth.getUserProfile(user.id);
+                if (!profile) throw new Error('User profile not found');
+
+                const { data, error } = await supabaseClient
+                    .from('role_upgrade_requests')
+                    .insert({
+                        user_id: user.id,
+                        from_role: profile.role,  // Changed from current_role
+                        to_role: requestedRole,   // Changed from requested_role
+                        request_message: requestMessage,
+                        website_url: websiteUrl,
+                        proof_image_url: proofImageUrl,
+                        status: 'pending'
+                    })
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                return { success: true, data };
+            } catch (error) {
+                console.error('Create role upgrade request error:', error);
+                return { success: false, error: error.message };
+            }
+        },
+
+        // Get user's own role upgrade requests
+        async getUserRequests() {
+            try {
+                const user = await db.auth.getCurrentUser();
+                if (!user) throw new Error('Must be logged in');
+
+                const { data, error } = await supabaseClient
+                    .from('role_upgrade_requests')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                return { success: true, data };
+            } catch (error) {
+                console.error('Get user role upgrade requests error:', error);
+                return { success: false, error: error.message, data: [] };
+            }
+        },
+
+        // Get all pending role upgrade requests (admin only)
+        async getPendingRequests() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('role_upgrade_requests')
+                    .select(`
+                        *,
+                        users!role_upgrade_requests_user_id_fkey(username, email, role, created_at)
+                    `)
+                    .eq('status', 'pending')
+                    .order('created_at', { ascending: true });
+
+                if (error) throw error;
+                return { success: true, data };
+            } catch (error) {
+                console.error('Get pending role upgrade requests error:', error);
+                return { success: false, error: error.message, data: [] };
+            }
+        },
+
+        // Get all role upgrade requests (admin only)
+        async getAllRequests() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('role_upgrade_requests')
+                    .select(`
+                        *,
+                        users!role_upgrade_requests_user_id_fkey(username, email, role, created_at)
+                    `)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                return { success: true, data };
+            } catch (error) {
+                console.error('Get all role upgrade requests error:', error);
+                return { success: false, error: error.message, data: [] };
+            }
+        },
+
+        // Approve role upgrade request (admin only)
+        async approve(requestId, adminNotes = '') {
+            try {
+                const user = await db.auth.getCurrentUser();
+                if (!user) throw new Error('Must be logged in');
+
+                const { data, error } = await supabaseClient
+                    .rpc('approve_role_upgrade_request', {
+                        request_uuid: requestId,
+                        admin_uuid: user.id,
+                        notes: adminNotes
+                    });
+
+                if (error) throw error;
+                return { success: true, data };
+            } catch (error) {
+                console.error('Approve role upgrade request error:', error);
+                return { success: false, error: error.message };
+            }
+        },
+
+        // Reject role upgrade request (admin only)
+        async reject(requestId, adminNotes = '') {
+            try {
+                const user = await db.auth.getCurrentUser();
+                if (!user) throw new Error('Must be logged in');
+
+                const { data, error } = await supabaseClient
+                    .rpc('reject_role_upgrade_request', {
+                        request_uuid: requestId,
+                        admin_uuid: user.id,
+                        notes: adminNotes
+                    });
+
+                if (error) throw error;
+                return { success: true, data };
+            } catch (error) {
+                console.error('Reject role upgrade request error:', error);
                 return { success: false, error: error.message };
             }
         }
