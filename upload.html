@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tải lên truyện - App Truyện</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <a href="index.html" class="text-2xl font-bold text-green-600">📚 App Truyện</a>
+                
+                <div class="flex items-center gap-4">
+                    <a href="index.html" class="text-gray-700 hover:text-green-600">Trang chủ</a>
+                    <a href="authors.html" class="text-gray-700 hover:text-green-600">Tác giả</a>
+                    <a href="search-by-tag.html" class="text-gray-700 hover:text-green-600">Tìm theo thể loại</a>
+                    <a href="ranking.html" class="text-gray-700 hover:text-green-600">Bảng xếp hạng</a>
+                    <a href="upload.html" class="text-green-600 font-semibold">Tải lên</a>
+
+                    <!-- User Menu -->
+                    <div id="userMenu"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-6">📤 Tải lên truyện</h1>
+            
+            <!-- Tab Navigation -->
+            <div class="flex border-b border-gray-200 mb-6">
+                <button id="manualTab" class="tab-btn px-6 py-3 font-semibold text-green-600 border-b-2 border-green-600">
+                    Thêm thủ công
+                </button>
+                <button id="csvTab" class="tab-btn px-6 py-3 font-semibold text-gray-500 hover:text-green-600">
+                    Tải lên CSV
+                </button>
+            </div>
+
+            <!-- Manual Upload Form -->
+            <div id="manualUploadSection">
+                <form id="manualUploadForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tên truyện *</label>
+                        <input type="text" name="title" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tác giả *</label>
+                        <input type="text" name="author_name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Người dịch</label>
+                        <input type="text" name="editor_name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Số chương</label>
+                        <input type="number" name="chapter_count" min="0" value="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tóm tắt</label>
+                        <textarea name="summary" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Link đọc truyện</label>
+                        <input type="url" name="novel_url" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Link ảnh bìa</label>
+                        <input type="url" name="cover_image_url" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Trạng thái *</label>
+                        <select name="status" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            <option value="Đang ra">Đang ra</option>
+                            <option value="Hoàn thành">Hoàn thành</option>
+                            <option value="Tạm ngưng">Tạm ngưng</option>
+                        </select>
+                    </div>
+
+                    <!-- Tags Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Thể loại</label>
+                        <p class="text-xs text-gray-500 mb-2">Chọn các thể loại phù hợp với truyện (chỉ chọn từ danh sách có sẵn)</p>
+
+                        <!-- Selected Tags Display -->
+                        <div id="selectedTagsDisplay" class="flex flex-wrap gap-2 mb-3 p-3 border border-gray-200 rounded-lg min-h-[60px] bg-gray-50">
+                            <span class="text-gray-400 text-sm" id="noTagsPlaceholder">Chưa chọn thể loại nào</span>
+                        </div>
+
+                        <!-- Tag Picker Dropdown -->
+                        <div class="relative">
+                            <button type="button" id="tagPickerBtn" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-left flex items-center justify-between hover:border-green-500 focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                <span class="text-gray-700">Chọn thể loại...</span>
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+
+                            <!-- Dropdown Menu -->
+                            <div id="tagPickerDropdown" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                                <div class="p-2">
+                                    <input type="text" id="tagSearchInput" placeholder="Tìm thể loại..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                </div>
+                                <div id="tagPickerList" class="p-2">
+                                    <!-- Tags will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hidden input to store selected tag IDs -->
+                        <input type="hidden" name="tag_ids" id="tagIdsInput" value="">
+                    </div>
+
+                    <div class="flex gap-4 pt-4">
+                        <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                            📤 Tải lên
+                        </button>
+                        <button type="reset" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                            Xóa
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- CSV Upload Section -->
+            <div id="csvUploadSection" class="hidden">
+                <div class="space-y-6">
+                    <!-- Download Template -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-blue-900 mb-2">📥 Tải xuống mẫu CSV</h3>
+                        <p class="text-sm text-blue-700 mb-3">Tải xuống file mẫu CSV để điền thông tin truyện</p>
+                        <button id="downloadTemplateBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+                            ⬇️ Tải xuống mẫu CSV
+                        </button>
+                    </div>
+
+                    <!-- Upload CSV -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Chọn file CSV</label>
+                        <input type="file" id="csvFileInput" accept=".csv" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        <p class="text-xs text-gray-500 mt-1">Chỉ chấp nhận file .csv với encoding UTF-8</p>
+                    </div>
+
+                    <!-- Preview Section -->
+                    <div id="csvPreviewSection" class="hidden">
+                        <h3 class="font-semibold text-gray-800 mb-3">👁️ Xem trước dữ liệu</h3>
+                        <div id="csvPreview" class="overflow-x-auto border border-gray-200 rounded-lg mb-4"></div>
+                        
+                        <div id="csvErrors" class="hidden mb-4"></div>
+
+                        <div class="flex gap-4">
+                            <button id="importCsvBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                                ✅ Nhập dữ liệu
+                            </button>
+                            <button id="cancelCsvBtn" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                                Hủy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mt-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">📖 Hướng dẫn</h2>
+            
+            <div class="space-y-4 text-sm text-gray-700">
+                <div>
+                    <h3 class="font-semibold text-gray-800 mb-2">Thêm thủ công:</h3>
+                    <ul class="list-disc list-inside space-y-1 ml-2">
+                        <li>Điền thông tin truyện vào form</li>
+                        <li>Các trường có dấu (*) là bắt buộc</li>
+                        <li>Nhấn "Tải lên" để gửi</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-gray-800 mb-2">Tải lên CSV:</h3>
+                    <ul class="list-disc list-inside space-y-1 ml-2">
+                        <li>Tải xuống file mẫu CSV</li>
+                        <li>Mở file bằng Excel hoặc Google Sheets</li>
+                        <li>Điền thông tin truyện vào các cột</li>
+                        <li>Lưu file với encoding UTF-8</li>
+                        <li>Tải lên và xem trước trước khi nhập</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-gray-800 mb-2">Lưu ý:</h3>
+                    <ul class="list-disc list-inside space-y-1 ml-2">
+                        <li><strong>Thành viên chờ duyệt:</strong> Không thể tải lên truyện</li>
+                        <li><strong>Độc giả:</strong> Truyện sẽ chờ admin duyệt</li>
+                        <li><strong>Dịch giả & Admin:</strong> Truyện được duyệt tự động</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 flex items-center gap-3">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+            <span class="text-gray-700 font-medium">Đang xử lý...</span>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/upload.js"></script>
+</body>
+</html>
+

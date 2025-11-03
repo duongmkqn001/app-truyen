@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tìm kiếm theo thể loại - App Truyện</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <a href="index.html" class="text-2xl font-bold text-green-600">📚 App Truyện</a>
+                
+                <div class="flex items-center gap-4">
+                    <a href="index.html" class="text-gray-700 hover:text-green-600">Trang chủ</a>
+                    <a href="authors.html" class="text-gray-700 hover:text-green-600">Tác giả</a>
+                    <a href="search-by-tag.html" class="text-green-600 font-semibold">Tìm theo thể loại</a>
+                    <a href="ranking.html" class="text-gray-700 hover:text-green-600">Bảng xếp hạng</a>
+                    <a href="upload.html" class="text-gray-700 hover:text-green-600">Tải lên</a>
+                    
+                    <!-- User Menu -->
+                    <div id="userMenu"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-6xl mx-auto">
+            <h1 class="text-3xl font-bold text-gray-800 mb-6">🏷️ Tìm kiếm theo thể loại</h1>
+            
+            <!-- Instructions -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 mb-6">
+                <div class="flex items-start gap-3">
+                    <div class="text-2xl">💡</div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-blue-900 mb-2">Hướng dẫn sử dụng:</h3>
+                        <ul class="text-sm text-blue-800 space-y-1">
+                            <li>• <strong>Click trái</strong> vào thể loại để <span class="text-green-700 font-semibold">chọn</span> (tìm truyện có thể loại này)</li>
+                            <li>• <strong>Click phải</strong> vào thể loại để <span class="text-red-700 font-semibold">loại trừ</span> (ẩn truyện có thể loại này)</li>
+                            <li>• Sử dụng ô tìm kiếm để lọc thể loại nhanh chóng</li>
+                            <li>• Nhấn "Hiện tất cả" để xem toàn bộ danh sách thể loại</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Filters -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <form id="searchForm" class="space-y-6">
+                    <!-- Tag Search Input -->
+                    <div>
+                        <label class="block text-lg font-semibold text-gray-800 mb-3">
+                            🏷️ Tìm kiếm thể loại
+                        </label>
+                        <div class="flex gap-3 mb-4">
+                            <input type="text" id="tagSearchInput"
+                                   placeholder="Nhập tên thể loại để tìm kiếm..."
+                                   class="flex-1 px-4 py-2 border-2 border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent">
+                            <button type="button" id="showAllTagsBtn"
+                                    class="px-6 py-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-colors whitespace-nowrap">
+                                Hiện tất cả
+                            </button>
+                            <button type="button" id="hideAllTagsBtn"
+                                    class="hidden px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors whitespace-nowrap">
+                                Ẩn bớt
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Selected Tags Display -->
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="block text-lg font-semibold text-gray-800">
+                                ✅ Thể loại đã chọn
+                            </label>
+                            <button type="button" id="clearIncludeTags" class="text-sm text-red-600 hover:text-red-700 font-medium">
+                                Xóa tất cả
+                            </button>
+                        </div>
+                        <div id="includeTagsContainer" class="flex flex-wrap gap-2 min-h-[80px] p-4 border-2 border-green-200 rounded-lg bg-green-50">
+                            <div id="includeTagsPlaceholder" class="text-gray-400 text-sm">Chưa chọn thể loại nào. Nhấp vào thể loại bên dưới để thêm...</div>
+                        </div>
+                    </div>
+
+                    <!-- Blacklist Tags Display -->
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="block text-lg font-semibold text-gray-800">
+                                ❌ Thể loại loại trừ (Blacklist)
+                            </label>
+                            <button type="button" id="clearExcludeTags" class="text-sm text-red-600 hover:text-red-700 font-medium">
+                                Xóa tất cả
+                            </button>
+                        </div>
+                        <div id="excludeTagsContainer" class="flex flex-wrap gap-2 min-h-[80px] p-4 border-2 border-red-200 rounded-lg bg-red-50">
+                            <div id="excludeTagsPlaceholder" class="text-gray-400 text-sm">Chưa chọn thể loại nào. Nhấp chuột phải vào thể loại để loại trừ...</div>
+                        </div>
+                    </div>
+
+                    <!-- All Available Tags (Organized by Category) -->
+                    <div>
+                        <label class="block text-lg font-semibold text-gray-800 mb-3">
+                            📚 Tất cả thể loại
+                        </label>
+                        <div id="allTagsContainer" class="p-4 border-2 border-gray-200 rounded-lg bg-gray-50 max-h-[500px] overflow-y-auto">
+                            <!-- Tags will be loaded here organized by category -->
+                        </div>
+                    </div>
+
+                    <!-- Optional Filters -->
+                    <div class="border-t pt-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">🔍 Bộ lọc bổ sung (tùy chọn)</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Title Search (Optional) -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tên truyện</label>
+                                <input type="text" id="searchTitle" placeholder="Nhập tên truyện (không bắt buộc)..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            </div>
+
+                            <!-- Author Search (Optional) -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tác giả</label>
+                                <input type="text" id="searchAuthor" placeholder="Nhập tên tác giả (không bắt buộc)..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            </div>
+
+                            <!-- Status Filter -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
+                                <select id="searchStatus" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                    <option value="">Tất cả</option>
+                                    <option value="Đang ra">Đang ra</option>
+                                    <option value="Hoàn thành">Hoàn thành</option>
+                                    <option value="Tạm ngưng">Tạm ngưng</option>
+                                </select>
+                            </div>
+
+                            <!-- Sort By -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Sắp xếp theo</label>
+                                <select id="sortBy" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                    <option value="created_at_desc">Mới nhất</option>
+                                    <option value="created_at_asc">Cũ nhất</option>
+                                    <option value="title_asc">Tên A-Z</option>
+                                    <option value="title_desc">Tên Z-A</option>
+                                    <option value="rating_desc">Đánh giá cao nhất</option>
+                                    <option value="rating_asc">Đánh giá thấp nhất</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-4">
+                        <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                            🔍 Tìm kiếm
+                        </button>
+                        <button type="reset" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                            Xóa tất cả bộ lọc
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Results Count -->
+            <div id="resultsCount" class="text-gray-700 mb-4"></div>
+
+            <!-- Search Results -->
+            <div id="searchResults" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Results will be loaded here -->
+            </div>
+
+            <!-- Pagination -->
+            <div id="pagination" class="mt-8 flex justify-center gap-2">
+                <!-- Pagination buttons will be loaded here -->
+            </div>
+
+            <!-- No Results Message -->
+            <div id="noResults" class="hidden text-center py-12">
+                <div class="text-6xl mb-4">🏷️</div>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">Không tìm thấy truyện</h3>
+                <p class="text-gray-500">Thử chọn thể loại khác hoặc thay đổi bộ lọc</p>
+            </div>
+
+            <!-- Initial State Message -->
+            <div id="initialState" class="text-center py-12">
+                <div class="text-6xl mb-4">🏷️</div>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">Chọn thể loại để bắt đầu</h3>
+                <p class="text-gray-500">Chọn ít nhất một thể loại muốn xem hoặc nhấn "Tìm kiếm" để xem tất cả</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 flex items-center gap-3">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+            <span class="text-gray-700 font-medium">Đang tìm kiếm...</span>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/novel-modal.js"></script>
+    <script src="js/tag-categories.js"></script>
+    <script src="js/search-by-tag.js"></script>
+</body>
+</html>
+

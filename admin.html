@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản trị - Danh sách Tiểu thuyết</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gradient-to-br from-green-50 via-mint-50 to-teal-50 text-gray-800 py-4" style="background: linear-gradient(to bottom right, #f0fdf4, #ecfdf5, #f0fdfa);">
+    
+    <div class="container mx-auto max-w-7xl px-4">
+        <!-- Header -->
+        <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-6 border border-green-100">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold" style="color: #059669;">🛡️ Bảng điều khiển Quản trị</h1>
+                    <p class="text-gray-600 mt-1">Quản lý người dùng, truyện và nội dung</p>
+                </div>
+                <a href="index.html" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition-colors">
+                    ← Quay lại trang chủ
+                </a>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div id="statsSection" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <!-- Will be populated by JavaScript -->
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-green-100 mb-6">
+            <div class="flex border-b border-green-100 overflow-x-auto">
+                <button id="tabPendingMembers" class="tab-button active px-6 py-4 font-semibold transition-colors whitespace-nowrap">
+                    ⏳ Thành viên chờ duyệt
+                </button>
+                <button id="tabPendingNovels" class="tab-button px-6 py-4 font-semibold transition-colors whitespace-nowrap">
+                    📖 Truyện chờ duyệt
+                </button>
+                <button id="tabTranslatorRequests" class="tab-button px-6 py-4 font-semibold transition-colors whitespace-nowrap">
+                    ✍️ Yêu cầu dịch giả
+                </button>
+                <button id="tabUsers" class="tab-button px-6 py-4 font-semibold transition-colors whitespace-nowrap">
+                    👥 Người dùng
+                </button>
+                <button id="tabNovels" class="tab-button px-6 py-4 font-semibold transition-colors whitespace-nowrap">
+                    📚 Truyện
+                </button>
+                <button id="tabReports" class="tab-button px-6 py-4 font-semibold transition-colors whitespace-nowrap">
+                    🚩 Báo cáo
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- Pending Members Tab -->
+                <div id="contentPendingMembers" class="tab-content">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800">Thành viên chờ duyệt</h2>
+                        <button id="refreshPendingMembers" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                            🔄 Làm mới
+                        </button>
+                    </div>
+                    <div id="pendingMembersTable" class="overflow-x-auto">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Pending Novels Tab -->
+                <div id="contentPendingNovels" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800">Truyện chờ duyệt</h2>
+                        <button id="refreshPendingNovels" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                            🔄 Làm mới
+                        </button>
+                    </div>
+                    <div id="pendingNovelsTable" class="overflow-x-auto">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Translator Requests Tab -->
+                <div id="contentTranslatorRequests" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800">Yêu cầu nâng cấp dịch giả</h2>
+                        <button id="refreshTranslatorRequests" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                            🔄 Làm mới
+                        </button>
+                    </div>
+                    <div id="translatorRequestsTable" class="overflow-x-auto">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Users Tab -->
+                <div id="contentUsers" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800">Danh sách người dùng</h2>
+                        <button id="refreshUsers" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                            🔄 Làm mới
+                        </button>
+                    </div>
+                    <div id="usersTable" class="overflow-x-auto">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Novels Tab -->
+                <div id="contentNovels" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800">Danh sách truyện</h2>
+                        <button id="refreshNovels" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                            🔄 Làm mới
+                        </button>
+                    </div>
+                    <div id="novelsTable" class="overflow-x-auto">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Reports Tab -->
+                <div id="contentReports" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800">Báo cáo vi phạm</h2>
+                        <div class="flex gap-2">
+                            <select id="reportStatusFilter" class="px-4 py-2 border border-green-200 rounded-lg">
+                                <option value="">Tất cả</option>
+                                <option value="pending">Đang chờ</option>
+                                <option value="resolved">Đã xử lý</option>
+                                <option value="dismissed">Đã bỏ qua</option>
+                            </select>
+                            <button id="refreshReports" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                                🔄 Làm mới
+                            </button>
+                        </div>
+                    </div>
+                    <div id="reportsTable" class="overflow-x-auto">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 shadow-xl">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+                <p class="mt-4 text-gray-700 font-semibold">Đang tải...</p>
+            </div>
+        </div>
+
+        <!-- Message Toast -->
+        <div id="messageToast" class="hidden fixed bottom-4 right-4 bg-white rounded-lg shadow-xl p-4 border-l-4 z-50">
+            <p id="messageText" class="font-semibold"></p>
+        </div>
+
+        <!-- Edit Novel Modal -->
+        <div id="editNovelModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-gray-800">✏️ Chỉnh sửa truyện</h2>
+                    <button onclick="closeEditModal()" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                </div>
+
+                <form id="editNovelForm" class="p-6 space-y-4">
+                    <input type="hidden" id="editNovelId">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Tên truyện *</label>
+                            <input type="text" id="editTitle" required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Tác giả *</label>
+                            <input type="text" id="editAuthor" required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Người dịch / Biên tập</label>
+                            <input type="text" id="editEditor"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Số chương</label>
+                            <input type="number" id="editChapterCount" min="0"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Trạng thái *</label>
+                            <select id="editStatus" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                <option value="ongoing">Đang tiến hành</option>
+                                <option value="completed">Hoàn thành</option>
+                                <option value="hiatus">Tạm ngưng</option>
+                                <option value="dropped">Đã bỏ</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Link ảnh bìa</label>
+                            <input type="url" id="editCoverImage"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Link đọc truyện</label>
+                        <input type="url" id="editNovelUrl"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Tóm tắt</label>
+                        <textarea id="editSummary" rows="6"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                  placeholder="Nhập tóm tắt truyện (giữ nguyên định dạng xuống dòng)"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Thể loại (Tags)</label>
+                        <div id="editTagsContainer" class="border border-gray-300 rounded-lg p-4 max-h-60 overflow-y-auto">
+                            <!-- Tags will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 pt-4 border-t border-gray-200">
+                        <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                            💾 Lưu thay đổi
+                        </button>
+                        <button type="button" onclick="closeEditModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-colors">
+                            ❌ Hủy
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/admin-ui.js"></script>
+</body>
+</html>
+

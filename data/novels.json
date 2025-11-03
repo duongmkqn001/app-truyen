@@ -1,0 +1,139 @@
+{
+  "novels": [
+    {
+      "id": 1,
+      "title": "Ma Đạo Tổ Sư",
+      "author": "Mặc Hương Đồng Khứu",
+      "editor": "Hảo Hảo",
+      "genres": ["Đam mỹ", "Huyền huyễn"],
+      "genreColor": "green",
+      "chapters": 113,
+      "status": "Hoàn thành",
+      "statusColor": "green",
+      "lastUpdate": "2016-03-01",
+      "rating": 4.9,
+      "votes": 1234
+    },
+    {
+      "id": 2,
+      "title": "Thiên Quan Tứ Phúc",
+      "author": "Mặc Hương Đồng Khứu",
+      "editor": "Hảo Hảo",
+      "genres": ["Đam mỹ", "Tiên hiệp"],
+      "genreColor": "blue",
+      "chapters": 244,
+      "status": "Hoàn thành",
+      "statusColor": "green",
+      "lastUpdate": "2018-02-25",
+      "rating": 4.8,
+      "votes": 1156
+    },
+    {
+      "id": 3,
+      "title": "Toàn Chức Cao Thủ",
+      "author": "Hồ Điệp Lam",
+      "editor": "Minh Minh",
+      "genres": ["Võng du", "Cạnh kỹ"],
+      "genreColor": "yellow",
+      "chapters": 1728,
+      "status": "Hoàn thành",
+      "statusColor": "green",
+      "lastUpdate": "2014-04-28",
+      "rating": 4.7,
+      "votes": 987
+    },
+    {
+      "id": 4,
+      "title": "Đấu La Đại Lục",
+      "author": "Đường Gia Tam Thiếu",
+      "editor": "Linh Linh",
+      "genres": ["Huyền huyễn", "Dị giới"],
+      "genreColor": "red",
+      "chapters": 336,
+      "status": "Hoàn thành",
+      "statusColor": "green",
+      "lastUpdate": "2009-12-13",
+      "rating": 4.5,
+      "votes": 745
+    },
+    {
+      "id": 5,
+      "title": "Hệ Thống Tự Cứu Của Nhân Vật Phản Diện",
+      "author": "Mặc Hương Đồng Khứu",
+      "editor": "Hảo Hảo",
+      "genres": ["Xuyên thư", "Đam mỹ"],
+      "genreColor": "purple",
+      "chapters": 81,
+      "status": "Hoàn thành",
+      "statusColor": "green",
+      "lastUpdate": "2014-11-30",
+      "rating": 4.4,
+      "votes": 623
+    },
+    {
+      "id": 6,
+      "title": "Phàm Nhân Tu Tiên",
+      "author": "Vong Ngữ",
+      "editor": "Tuấn Tuấn",
+      "genres": ["Tiên hiệp", "Phàm nhân"],
+      "genreColor": "blue",
+      "chapters": "2400+",
+      "status": "Đang ra",
+      "statusColor": "orange",
+      "lastUpdate": "2024-11-02",
+      "rating": 4.6,
+      "votes": 856
+    }
+  ],
+  "rankings": [
+    {
+      "rank": 1,
+      "novelId": 1,
+      "title": "Ma Đạo Tổ Sư",
+      "rating": 4.9,
+      "votes": 1234,
+      "badgeColor": "yellow"
+    },
+    {
+      "rank": 2,
+      "novelId": 2,
+      "title": "Thiên Quan Tứ Phúc",
+      "rating": 4.8,
+      "votes": 1156,
+      "badgeColor": "gray"
+    },
+    {
+      "rank": 3,
+      "novelId": 3,
+      "title": "Toàn Chức Cao Thủ",
+      "rating": 4.7,
+      "votes": 987,
+      "badgeColor": "orange"
+    },
+    {
+      "rank": 4,
+      "novelId": 6,
+      "title": "Phàm Nhân Tu Tiên",
+      "rating": 4.6,
+      "votes": 856,
+      "badgeColor": "green"
+    },
+    {
+      "rank": 5,
+      "novelId": 4,
+      "title": "Đấu La Đại Lục",
+      "rating": 4.5,
+      "votes": 745,
+      "badgeColor": "green"
+    },
+    {
+      "rank": 6,
+      "novelId": 5,
+      "title": "Hệ Thống Tự Cứu...",
+      "rating": 4.4,
+      "votes": 623,
+      "badgeColor": "green"
+    }
+  ]
+}
+
