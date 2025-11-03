@@ -12,28 +12,40 @@ const db = {
         // Sign up new user
         async signUp(email, password, username) {
             try {
-                // Create auth user
+                console.log('Starting sign up process...', { email, username });
+
+                // Create auth user with username in metadata
+                // The database trigger will automatically create the profile
                 const { data: authData, error: authError } = await supabaseClient.auth.signUp({
                     email,
-                    password
+                    password,
+                    options: {
+                        data: {
+                            username: username
+                        }
+                    }
                 });
-                
-                if (authError) throw authError;
-                
-                // Create user profile with pending_approval role
-                const { error: profileError } = await supabaseClient
-                    .from('users')
-                    .insert({
-                        id: authData.user.id,
-                        username,
-                        role: 'pending_approval' // New users need admin approval
-                    });
-                
-                if (profileError) throw profileError;
-                
+
+                if (authError) {
+                    console.error('Auth sign up error:', authError);
+                    throw authError;
+                }
+
+                console.log('Auth user created successfully:', authData.user.id);
+                console.log('User profile will be created automatically by database trigger');
+
                 return { success: true, user: authData.user };
             } catch (error) {
                 console.error('Sign up error:', error);
+                console.error('Full error object:', {
+                    message: error.message,
+                    name: error.name,
+                    status: error.status,
+                    statusCode: error.statusCode,
+                    details: error.details,
+                    hint: error.hint,
+                    code: error.code
+                });
                 return { success: false, error: error.message };
             }
         },
@@ -41,12 +53,24 @@ const db = {
         // Sign in
         async signIn(email, password) {
             try {
+                console.log('Attempting sign in...', { email });
+
                 const { data, error } = await supabaseClient.auth.signInWithPassword({
                     email,
                     password
                 });
-                
-                if (error) throw error;
+
+                if (error) {
+                    console.error('Sign in error:', error);
+                    console.error('Error details:', {
+                        message: error.message,
+                        status: error.status,
+                        name: error.name
+                    });
+                    throw error;
+                }
+
+                console.log('Sign in successful:', data.user.id);
                 return { success: true, user: data.user };
             } catch (error) {
                 console.error('Sign in error:', error);

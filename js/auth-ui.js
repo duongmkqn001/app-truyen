@@ -9,6 +9,32 @@ const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
 const authMessage = document.getElementById('authMessage');
 
+// Password toggle buttons
+const toggleLoginPassword = document.getElementById('toggleLoginPassword');
+const toggleRegisterPassword = document.getElementById('toggleRegisterPassword');
+const toggleRegisterPasswordConfirm = document.getElementById('toggleRegisterPasswordConfirm');
+
+// Password toggle functionality
+function setupPasswordToggle(button, inputId) {
+    if (!button) return;
+
+    button.addEventListener('click', () => {
+        const input = document.getElementById(inputId);
+        const eyeIcon = button.querySelector('.eye-icon');
+        const eyeOffIcon = button.querySelector('.eye-off-icon');
+
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        eyeIcon.classList.toggle('hidden', isPassword);
+        eyeOffIcon.classList.toggle('hidden', !isPassword);
+    });
+}
+
+// Initialize password toggles
+setupPasswordToggle(toggleLoginPassword, 'loginPassword');
+setupPasswordToggle(toggleRegisterPassword, 'registerPassword');
+setupPasswordToggle(toggleRegisterPasswordConfirm, 'registerPasswordConfirm');
+
 // Tab Switching
 loginTab.addEventListener('click', () => {
     loginTab.classList.add('bg-white', 'text-green-700', 'shadow-sm');
