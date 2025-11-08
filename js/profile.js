@@ -40,8 +40,8 @@ async function initAuth() {
     userMenu.innerHTML = `
         <div class="flex items-center gap-3">
             <a href="profile.html" class="text-green-600 font-semibold">👤 ${userProfile?.username || currentUser.email}</a>
-            ${UIComponents.createRoleBadge(userProfile?.role || 'pending_approval')}
-            ${userProfile?.role === 'admin' ? '<a href="admin-users.html" class="text-blue-600 hover:underline">Quản lý</a>' : ''}
+            ${UIComponents.createRoleBadge(userProfile?.role || 'reader')}
+            ${['admin', 'super_admin', 'sub_admin'].includes(userProfile?.role) ? '<a href="admin.html" class="text-blue-600 hover:underline">Quản trị</a>' : ''}
             <button onclick="logout()" class="text-red-600 hover:underline">Đăng xuất</button>
         </div>
     `;
@@ -81,30 +81,28 @@ function displayProfileInfo() {
 function filterAvailableRoles() {
     const select = document.getElementById('requestedRole');
     const currentRole = userProfile.role;
-    
+
     // Define role hierarchy
     const roleHierarchy = {
-        'pending_approval': ['member'],
-        'member': ['contributor'],
-        'contributor': ['admin'],
-        'admin': []
+        'reader': ['translator'],
+        'translator': ['admin'],
+        'admin': [],
+        'super_admin': [],
+        'sub_admin': []
     };
-    
+
     const availableRoles = roleHierarchy[currentRole] || [];
-    
+
     // Clear and populate select options
     select.innerHTML = '<option value="">-- Chọn vai trò --</option>';
-    
-    if (availableRoles.includes('member')) {
-        select.innerHTML += '<option value="member">Thành viên (Member)</option>';
-    }
-    if (availableRoles.includes('contributor')) {
-        select.innerHTML += '<option value="contributor">Cộng tác viên (Contributor)</option>';
+
+    if (availableRoles.includes('translator')) {
+        select.innerHTML += '<option value="translator">Dịch giả (Translator)</option>';
     }
     if (availableRoles.includes('admin')) {
         select.innerHTML += '<option value="admin">Quản trị viên (Admin)</option>';
     }
-    
+
     if (availableRoles.length === 0) {
         select.innerHTML = '<option value="">Bạn đã đạt vai trò cao nhất</option>';
         select.disabled = true;
@@ -189,10 +187,11 @@ function getStatusBadge(status) {
 // Get role name in Vietnamese
 function getRoleName(role) {
     const names = {
-        'pending_approval': 'Chờ duyệt',
-        'member': 'Thành viên',
-        'contributor': 'Cộng tác viên',
-        'admin': 'Quản trị viên'
+        'reader': 'Độc giả',
+        'translator': 'Dịch giả',
+        'admin': 'Quản trị viên',
+        'super_admin': 'Quản trị viên cấp cao',
+        'sub_admin': 'Quản trị viên phụ'
     };
     return names[role] || role;
 }
@@ -204,7 +203,7 @@ function setupEventListeners() {
     // Show/hide verification fields based on selected role
     document.getElementById('requestedRole').addEventListener('change', function() {
         const verificationFields = document.getElementById('verificationFields');
-        if (this.value === 'contributor') {
+        if (this.value === 'translator') {
             verificationFields.classList.remove('hidden');
         } else {
             verificationFields.classList.add('hidden');
@@ -229,8 +228,8 @@ async function submitRequest() {
         return;
     }
 
-    // Validate verification fields for contributor requests
-    if (requestedRole === 'contributor') {
+    // Validate verification fields for translator requests
+    if (requestedRole === 'translator') {
         if (!websiteUrl) {
             showToast('Vui lòng nhập link website/Wattpad của bạn', 'error');
             return;
@@ -259,8 +258,8 @@ async function submitRequest() {
     const result = await db.roleUpgradeRequests.create(
         requestedRole,
         requestMessage,
-        requestedRole === 'contributor' ? websiteUrl : null,
-        requestedRole === 'contributor' ? proofImageUrl : null
+        requestedRole === 'translator' ? websiteUrl : null,
+        requestedRole === 'translator' ? proofImageUrl : null
     );
 
     if (result.success) {
@@ -303,10 +302,85 @@ async function logout() {
     }
 }
 
+// =====================================================
+// EDIT USERNAME FUNCTIONALITY
+// =====================================================
+
+function initEditUsername() {
+    const editBtn = document.getElementById('editUsernameBtn');
+    const modal = document.getElementById('editUsernameModal');
+    const closeBtn = document.getElementById('closeEditUsernameModal');
+    const cancelBtn = document.getElementById('cancelEditUsername');
+    const form = document.getElementById('editUsernameForm');
+    const input = document.getElementById('newUsername');
+
+    // Open modal
+    editBtn.addEventListener('click', () => {
+        input.value = userProfile.username;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        input.focus();
+    });
+
+    // Close modal
+    const closeModal = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        input.value = '';
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+
+    // Close on outside click
+    modal.addEventListener('click', (e) => {
+        if (e.target.id === 'editUsernameModal') closeModal();
+    });
+
+    // Submit form
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const newUsername = input.value.trim();
+
+        if (!newUsername || newUsername.length < 3 || newUsername.length > 50) {
+            showToast('Tên người dùng phải có từ 3-50 ký tự', 'error');
+            return;
+        }
+
+        if (newUsername === userProfile.username) {
+            showToast('Tên người dùng mới giống tên cũ', 'error');
+            return;
+        }
+
+        // Update username
+        const result = await db.auth.updateUsername(currentUser.id, newUsername);
+
+        if (result.success) {
+            userProfile.username = newUsername;
+            document.getElementById('profileUsername').textContent = newUsername;
+            showToast('Đã cập nhật tên người dùng thành công!', 'success');
+            closeModal();
+
+            // Refresh user menu
+            await initAuth();
+        } else {
+            showToast('Lỗi: ' + result.error, 'error');
+        }
+    });
+}
+
 // Initialize on page load
+async function initPage() {
+    await init();
+    if (currentUser && userProfile) {
+        initEditUsername();
+    }
+}
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', initPage);
 } else {
-    init();
+    initPage();
 }
 

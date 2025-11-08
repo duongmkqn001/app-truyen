@@ -138,14 +138,23 @@ function renderNovelsTable() {
             : '';
         const novelId = novel.id;
 
-        // Handle tags from Supabase
+        // Handle tags from Supabase - Limit to 3 tags to prevent horizontal scrolling
         let genresHTML = '';
         if (novel.tag_names && novel.tag_names.length > 0) {
             const tagColors = novel.tag_colors || [];
-            genresHTML = novel.tag_names.map((tag, index) => {
+            const maxTagsToShow = 3;
+            const tagsToDisplay = novel.tag_names.slice(0, maxTagsToShow);
+            const remainingCount = novel.tag_names.length - maxTagsToShow;
+
+            genresHTML = tagsToDisplay.map((tag, index) => {
                 const color = tagColors[index] || 'blue';
                 return `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-${color}-100 text-${color}-800">${tag}</span>`;
             }).join(' ');
+
+            // Add "+X more" indicator if there are more tags
+            if (remainingCount > 0) {
+                genresHTML += ` <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-600">+${remainingCount}</span>`;
+            }
         } else {
             genresHTML = '<span class="text-xs text-gray-400">Chưa có thể loại</span>';
         }

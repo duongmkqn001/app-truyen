@@ -40,7 +40,6 @@ function updateAuthUI(isLoggedIn) {
     const loggedIn = document.getElementById('loggedIn');
     const usernameSpan = document.getElementById('username');
     const adminLink = document.getElementById('adminLink');
-    const adminUsersLink = document.getElementById('adminUsersLink');
 
     console.log('Updating auth UI:', { isLoggedIn, userProfile, notLoggedIn, loggedIn });
 
@@ -58,20 +57,12 @@ function updateAuthUI(isLoggedIn) {
             usernameSpan.textContent = userProfile.username;
         }
 
-        // Show admin links if user is admin
+        // Show admin link if user is admin (any admin type)
         if (adminLink) {
-            if (userProfile.role === 'admin' && !userProfile.is_banned) {
+            if (['admin', 'super_admin', 'sub_admin'].includes(userProfile.role) && !userProfile.is_banned) {
                 adminLink.classList.remove('hidden');
             } else {
                 adminLink.classList.add('hidden');
-            }
-        }
-
-        if (adminUsersLink) {
-            if (userProfile.role === 'admin' && !userProfile.is_banned) {
-                adminUsersLink.classList.remove('hidden');
-            } else {
-                adminUsersLink.classList.add('hidden');
             }
         }
     } else {

@@ -67,14 +67,11 @@ function initTabSwitching() {
 // Load data for specific tab
 async function loadTabData(tabId) {
     switch(tabId) {
-        case 'contentPendingMembers':
-            await loadPendingMembers();
-            break;
         case 'contentPendingNovels':
             await loadPendingNovels();
             break;
-        case 'contentTranslatorRequests':
-            await loadTranslatorRequests();
+        case 'contentRoleUpgradeRequests':
+            await loadRoleUpgradeRequests();
             break;
         case 'contentUsers':
             await loadUsers();
@@ -137,53 +134,9 @@ async function loadStats() {
     }
 }
 
-// Load pending members
-async function loadPendingMembers() {
-    showLoading();
-    const result = await db.auth.getPendingUsers();
-    hideLoading();
-
-    const table = document.getElementById('pendingMembersTable');
-
-    if (!result.success || result.data.length === 0) {
-        table.innerHTML = '<p class="text-gray-500 text-center py-8">Không có thành viên chờ duyệt.</p>';
-        return;
-    }
-
-    table.innerHTML = `
-        <table class="min-w-full divide-y divide-green-100">
-            <thead class="bg-green-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Tên người dùng</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Vai trò</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Ngày đăng ký</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Hành động</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-green-50">
-                ${result.data.map(user => `
-                    <tr class="hover:bg-green-50">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="font-medium text-gray-900">${user.username}</span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            ${UIComponents.createRoleBadge(user.role)}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${new Date(user.created_at).toLocaleDateString('vi-VN')}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <button onclick="approveUser('${user.id}')" class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg mr-2">
-                                ✓ Duyệt
-                            </button>
-                            <button onclick="banUser('${user.id}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg">
-                                ✗ Từ chối
-                            </button>
-                        </td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    `;
-}
+// DEPRECATED: Users are now auto-approved as 'reader' role
+// No longer need pending member approval
+// async function loadPendingMembers() { ... }
 
 // Load pending novels
 async function loadPendingNovels() {
@@ -235,15 +188,22 @@ async function loadPendingNovels() {
 }
 
 // Load translator requests
-async function loadTranslatorRequests() {
+async function loadRoleUpgradeRequests() {
     showLoading();
-    const result = await db.translatorRequests.getPending();
+    const result = await db.roleUpgradeRequests.getPendingRequests();
     hideLoading();
 
-    const table = document.getElementById('translatorRequestsTable');
+    console.log('Role upgrade requests result:', result);
 
-    if (!result.success || result.data.length === 0) {
-        table.innerHTML = '<p class="text-gray-500 text-center py-8">Không có yêu cầu nâng cấp dịch giả.</p>';
+    const table = document.getElementById('roleUpgradeRequestsTable');
+
+    if (!result.success) {
+        table.innerHTML = `<p class="text-red-500 text-center py-8">Lỗi: ${result.error || 'Không thể tải yêu cầu'}</p>`;
+        return;
+    }
+
+    if (result.data.length === 0) {
+        table.innerHTML = '<p class="text-gray-500 text-center py-8">Không có yêu cầu nâng cấp vai trò.</p>';
         return;
     }
 
@@ -252,34 +212,58 @@ async function loadTranslatorRequests() {
             <thead class="bg-green-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Người dùng</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Lời nhắn</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Từ vai trò</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Lên vai trò</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Lý do & Xác minh</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Ngày yêu cầu</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Hành động</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-green-50">
-                ${result.data.map(request => `
+                ${result.data.map(request => {
+                    // Handle nested users object from join
+                    const username = request.users?.username || 'N/A';
+                    return `
                     <tr class="hover:bg-green-50">
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center gap-2">
-                                <span class="font-medium text-gray-900">${request.username || 'N/A'}</span>
-                                ${request.user_role ? UIComponents.createRoleBadge(request.user_role) : ''}
-                            </div>
+                            <div class="font-medium text-gray-900">${username}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${UIComponents.createRoleBadge(request.from_role)}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${UIComponents.createRoleBadge(request.to_role)}
                         </td>
                         <td class="px-6 py-4">
-                            <div class="text-sm text-gray-700 max-w-md">${request.request_message || 'Không có lời nhắn'}</div>
+                            <div class="text-sm text-gray-700 max-w-md">
+                                <div class="mb-1">${request.request_message || 'Không có lý do'}</div>
+                                ${request.website_url ? `
+                                    <div class="mt-1">
+                                        <a href="${request.website_url}" target="_blank" class="text-blue-600 hover:underline text-xs">
+                                            🔗 Website/Wattpad
+                                        </a>
+                                    </div>
+                                ` : ''}
+                                ${request.proof_image_url ? `
+                                    <div class="mt-1">
+                                        <a href="${request.proof_image_url}" target="_blank" class="text-blue-600 hover:underline text-xs">
+                                            📷 Xem ảnh chứng minh
+                                        </a>
+                                    </div>
+                                ` : ''}
+                            </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${new Date(request.created_at).toLocaleDateString('vi-VN')}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <button onclick="approveTranslatorRequest('${request.id}')" class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg mr-2">
+                            <button onclick="approveRoleUpgradeRequest('${request.id}')" class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg mr-2">
                                 ✓ Duyệt
                             </button>
-                            <button onclick="rejectTranslatorRequest('${request.id}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg">
+                            <button onclick="rejectRoleUpgradeRequest('${request.id}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg">
                                 ✗ Từ chối
                             </button>
                         </td>
                     </tr>
-                `).join('')}
+                `}).join('')}
             </tbody>
         </table>
     `;
@@ -452,32 +436,8 @@ window.deleteNovel = async (novelId) => {
     }
 };
 
-// Approve user
-window.approveUser = async (userId) => {
-    showLoading();
-    const result = await db.auth.approveUser(userId);
-    hideLoading();
-    if (result.success) {
-        showMessage('Đã duyệt thành viên');
-        loadPendingMembers();
-    } else {
-        showMessage(result.error || 'Lỗi khi duyệt thành viên', true);
-    }
-};
-
-// Ban user
-window.banUser = async (userId) => {
-    if (!confirm('Bạn có chắc muốn từ chối/cấm người dùng này?')) return;
-    showLoading();
-    const result = await db.auth.banUser(userId);
-    hideLoading();
-    if (result.success) {
-        showMessage('Đã từ chối thành viên');
-        loadPendingMembers();
-    } else {
-        showMessage(result.error || 'Lỗi khi từ chối thành viên', true);
-    }
-};
+// DEPRECATED: Users are now auto-approved as 'reader' role
+// No longer need pending member approval functionality
 
 // Approve novel
 window.approveNovel = async (novelId) => {
@@ -508,24 +468,24 @@ window.rejectNovel = async (novelId) => {
     }
 };
 
-// Approve translator request
-window.approveTranslatorRequest = async (requestId) => {
+// Approve role upgrade request
+window.approveRoleUpgradeRequest = async (requestId) => {
     const notes = prompt('Ghi chú cho người dùng (tùy chọn):');
     if (notes === null) return; // User cancelled
 
     showLoading();
-    const result = await db.translatorRequests.approve(requestId, notes);
+    const result = await db.roleUpgradeRequests.approve(requestId, notes || '');
     hideLoading();
     if (result.success) {
-        showMessage('Đã duyệt yêu cầu dịch giả');
-        loadTranslatorRequests();
+        showMessage('Đã duyệt yêu cầu nâng cấp vai trò');
+        loadRoleUpgradeRequests();
     } else {
         showMessage(result.error || 'Lỗi khi duyệt yêu cầu', true);
     }
 };
 
-// Reject translator request
-window.rejectTranslatorRequest = async (requestId) => {
+// Reject role upgrade request
+window.rejectRoleUpgradeRequest = async (requestId) => {
     const notes = prompt('Lý do từ chối:');
     if (!notes) {
         alert('Vui lòng nhập lý do từ chối');
@@ -533,20 +493,19 @@ window.rejectTranslatorRequest = async (requestId) => {
     }
 
     showLoading();
-    const result = await db.translatorRequests.reject(requestId, notes);
+    const result = await db.roleUpgradeRequests.reject(requestId, notes);
     hideLoading();
     if (result.success) {
-        showMessage('Đã từ chối yêu cầu dịch giả');
-        loadTranslatorRequests();
+        showMessage('Đã từ chối yêu cầu nâng cấp vai trò');
+        loadRoleUpgradeRequests();
     } else {
         showMessage(result.error || 'Lỗi khi từ chối yêu cầu', true);
     }
 };
 
 // Refresh buttons
-document.getElementById('refreshPendingMembers').addEventListener('click', loadPendingMembers);
 document.getElementById('refreshPendingNovels').addEventListener('click', loadPendingNovels);
-document.getElementById('refreshTranslatorRequests').addEventListener('click', loadTranslatorRequests);
+document.getElementById('refreshRoleUpgradeRequests').addEventListener('click', loadRoleUpgradeRequests);
 document.getElementById('refreshUsers').addEventListener('click', loadUsers);
 document.getElementById('refreshNovels').addEventListener('click', loadNovels);
 
@@ -673,7 +632,7 @@ window.closeEditModal = closeEditModal;
     if (hasAccess) {
         initTabSwitching();
         loadStats();
-        loadPendingMembers(); // Load first tab by default
+        loadPendingNovels(); // Load first tab by default
     }
 })();
 

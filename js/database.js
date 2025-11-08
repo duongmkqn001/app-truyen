@@ -109,7 +109,7 @@ const db = {
                     .select('*')
                     .eq('id', userId)
                     .single();
-                
+
                 if (error) throw error;
                 return data;
             } catch (error) {
@@ -117,17 +117,66 @@ const db = {
                 return null;
             }
         },
+
+        // Update username
+        async updateUsername(userId, newUsername) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .update({
+                        username: newUsername,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', userId)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                return { success: true, data };
+            } catch (error) {
+                console.error('Update username error:', error);
+                return { success: false, error: error.message };
+            }
+        },
         
-        // Check if user is admin
+        // Check if user is admin (any admin type)
         async isAdmin() {
             try {
                 const user = await this.getCurrentUser();
                 if (!user) return false;
 
                 const profile = await this.getUserProfile(user.id);
-                return profile && profile.role === 'admin' && !profile.is_banned;
+                return profile && ['admin', 'super_admin', 'sub_admin'].includes(profile.role) && !profile.is_banned;
             } catch (error) {
                 console.error('Check admin error:', error);
+                return false;
+            }
+        },
+
+        // Check if user is super admin
+        async isSuperAdmin() {
+            try {
+                const user = await this.getCurrentUser();
+                if (!user) return false;
+
+                const profile = await this.getUserProfile(user.id);
+                return profile && profile.role === 'super_admin' && !profile.is_banned;
+            } catch (error) {
+                console.error('Check super admin error:', error);
+                return false;
+            }
+        },
+
+        // Check if user is sub-admin
+        async isSubAdmin() {
+            try {
+                const user = await this.getCurrentUser();
+                if (!user) return false;
+
+                const profile = await this.getUserProfile(user.id);
+                return profile && profile.role === 'sub_admin' && !profile.is_banned;
+            } catch (error) {
+                console.error('Check sub-admin error:', error);
                 return false;
             }
         },
@@ -738,6 +787,8 @@ const db = {
                         novel_id: novelId,
                         user_id: user.id,
                         rating: rating
+                    }, {
+                        onConflict: 'novel_id,user_id'
                     })
                     .select()
                     .single();
@@ -799,17 +850,19 @@ const db = {
         },
 
         // Create comment
-        async create(novelId, content) {
+        async create(novelId, content, isAnonymous = false, parentCommentId = null) {
             try {
                 const user = await db.auth.getCurrentUser();
                 if (!user) throw new Error('Must be logged in');
 
-                const { data, error } = await supabaseClient
+                const { data, error} = await supabaseClient
                     .from('comments')
                     .insert({
                         novel_id: novelId,
                         user_id: user.id,
-                        content: content
+                        content: content,
+                        is_anonymous: isAnonymous,
+                        parent_comment_id: parentCommentId
                     })
                     .select()
                     .single();
@@ -854,6 +907,27 @@ const db = {
                 console.error('Delete comment error:', error);
                 return { success: false, error: error.message };
             }
+        },
+
+        // Get replies for a comment
+        async getReplies(commentId) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('comments')
+                    .select(`
+                        *,
+                        users (username)
+                    `)
+                    .eq('parent_comment_id', commentId)
+                    .eq('is_flagged', false)
+                    .order('created_at', { ascending: true });
+
+                if (error) throw error;
+                return { success: true, data };
+            } catch (error) {
+                console.error('Get replies error:', error);
+                return { success: false, error: error.message, data: [] };
+            }
         }
     },
 
@@ -884,7 +958,7 @@ const db = {
         },
 
         // Create or update review
-        async upsert(novelId, reviewText) {
+        async upsert(novelId, reviewText, isAnonymous = false) {
             try {
                 const user = await db.auth.getCurrentUser();
                 if (!user) throw new Error('Must be logged in');
@@ -894,7 +968,8 @@ const db = {
                     .upsert({
                         novel_id: novelId,
                         user_id: user.id,
-                        review_text: reviewText
+                        review_text: reviewText,
+                        is_anonymous: isAnonymous
                     })
                     .select()
                     .single();
@@ -951,7 +1026,7 @@ const db = {
         },
 
         // Nominate a novel
-        async create(novelId) {
+        async create(novelId, isAnonymous = false) {
             try {
                 const user = await db.auth.getCurrentUser();
                 if (!user) throw new Error('Must be logged in');
@@ -960,7 +1035,8 @@ const db = {
                     .from('nominations')
                     .insert({
                         novel_id: novelId,
-                        user_id: user.id
+                        user_id: user.id,
+                        is_anonymous: isAnonymous
                     })
                     .select()
                     .single();
@@ -1188,12 +1264,16 @@ const db = {
                     .from('role_upgrade_requests')
                     .select(`
                         *,
-                        users!role_upgrade_requests_user_id_fkey(username, email, role, created_at)
+                        users!role_upgrade_requests_user_id_fkey(username, role, created_at)
                     `)
                     .eq('status', 'pending')
                     .order('created_at', { ascending: true });
 
                 if (error) throw error;
+
+                console.log('getPendingRequests - Raw data from DB:', data);
+                console.log('getPendingRequests - Number of requests:', data?.length || 0);
+
                 return { success: true, data };
             } catch (error) {
                 console.error('Get pending role upgrade requests error:', error);
@@ -1208,7 +1288,7 @@ const db = {
                     .from('role_upgrade_requests')
                     .select(`
                         *,
-                        users!role_upgrade_requests_user_id_fkey(username, email, role, created_at)
+                        users!role_upgrade_requests_user_id_fkey(username, role, created_at)
                     `)
                     .order('created_at', { ascending: false });
 

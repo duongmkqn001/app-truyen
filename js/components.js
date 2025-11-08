@@ -27,11 +27,21 @@ function createRoleBadge(role) {
             label: 'Quản trị',
             color: 'red',
             icon: '👑'
+        },
+        'super_admin': {
+            label: 'Quản trị cấp cao',
+            color: 'red',
+            icon: '⭐'
+        },
+        'sub_admin': {
+            label: 'Quản trị viên',
+            color: 'indigo',
+            icon: '🛡️'
         }
     };
 
     const config = roleConfig[role] || roleConfig['reader'];
-    
+
     return `
         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-${config.color}-100 text-${config.color}-800">
             <span class="mr-1">${config.icon}</span>
@@ -200,7 +210,7 @@ function createReportButton(targetType, targetId) {
 
 function createReportModal() {
     return `
-        <div id="reportModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div id="reportModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[60]">
             <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-xl font-bold text-gray-900">Báo cáo vi phạm</h3>

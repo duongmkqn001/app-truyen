@@ -227,6 +227,17 @@ async function renderInfoTab() {
                     ${UIComponents.createStarRating(userRating, 5, true, novel.id)}
                 </div>
                 ` : ''}
+
+                <!-- Report Novel Info Button -->
+                <div class="pt-4 border-t">
+                    <button
+                        class="report-btn text-sm text-red-600 hover:text-red-800 hover:underline"
+                        data-target-type="novel_info"
+                        data-target-id="${novel.id}"
+                    >
+                        🚩 Báo cáo thông tin sai/thiếu
+                    </button>
+                </div>
             </div>
         </div>
     `;
@@ -287,30 +298,67 @@ async function loadComments() {
         return;
     }
 
+    // Filter top-level comments (no parent)
+    const topLevelComments = comments.filter(c => !c.parent_comment_id);
+
     content.innerHTML = `
         <div class="space-y-4">
-            ${comments.map(comment => renderComment(comment)).join('')}
+            ${topLevelComments.map(comment => renderComment(comment)).join('')}
         </div>
     `;
+
+    // Load replies for all top-level comments
+    await loadAllReplies();
 }
 
-function renderComment(comment) {
-    const user = db.auth.getCurrentUser();
-    
+function renderComment(comment, isReply = false) {
+    // Check if comment is anonymous
+    const displayName = comment.is_anonymous ? 'Ẩn danh' : (comment.users?.username || comment.username || 'Ẩn danh');
+
     return `
-        <div class="bg-gray-50 rounded-lg p-4">
+        <div class="bg-gray-50 rounded-lg p-4 ${isReply ? 'ml-8 mt-2' : ''}" data-comment-id="${comment.id}">
             <div class="flex justify-between items-start mb-2">
                 <div class="flex items-center gap-2">
-                    <span class="font-semibold text-gray-900">${comment.username || 'Ẩn danh'}</span>
-                    ${comment.user_role ? UIComponents.createRoleBadge(comment.user_role) : ''}
+                    <span class="font-semibold text-gray-900">${displayName}</span>
+                    ${!comment.is_anonymous && comment.user_role ? UIComponents.createRoleBadge(comment.user_role) : ''}
                 </div>
                 <span class="text-xs text-gray-500">${new Date(comment.created_at).toLocaleDateString('vi-VN')}</span>
             </div>
             <p class="text-gray-700 mb-3">${comment.content}</p>
             <div class="flex items-center justify-between">
-                ${UIComponents.createLikeDislikeButtons('comment', comment.id, comment.like_count || 0, comment.dislike_count || 0)}
+                <div class="flex items-center gap-3">
+                    ${UIComponents.createLikeDislikeButtons('comment', comment.id, comment.like_count || 0, comment.dislike_count || 0)}
+                    ${!isReply ? `<button onclick="toggleReplyForm('${comment.id}')" class="text-sm text-blue-600 hover:text-blue-800 font-medium">💬 Trả lời</button>` : ''}
+                </div>
                 ${UIComponents.createReportButton('comment', comment.id)}
             </div>
+
+            <!-- Reply form (hidden by default) -->
+            <div id="replyForm-${comment.id}" class="hidden mt-3 pt-3 border-t border-gray-200">
+                <textarea
+                    id="replyInput-${comment.id}"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none text-sm"
+                    rows="2"
+                    placeholder="Viết câu trả lời..."
+                    maxlength="500"
+                ></textarea>
+                <div class="flex justify-between items-center mt-2">
+                    <label class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                        <input type="checkbox" id="replyAnonymous-${comment.id}" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                        <span>Ẩn danh</span>
+                    </label>
+                    <div class="flex gap-2">
+                        <button onclick="cancelReply('${comment.id}')" class="px-3 py-1 text-sm text-gray-600 hover:text-gray-800">Hủy</button>
+                        <button onclick="submitReply('${comment.id}')" class="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 text-white rounded-lg">Gửi</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Replies container -->
+            <div id="replies-${comment.id}" class="mt-2"></div>
+
+            <!-- Show/Hide replies button (will be populated if there are replies) -->
+            <div id="toggleReplies-${comment.id}"></div>
         </div>
     `;
 }
@@ -331,7 +379,13 @@ function renderCommentFooter() {
                 required
             ></textarea>
             <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-500">Tối đa 500 ký tự</span>
+                <div class="flex items-center gap-4">
+                    <span class="text-xs text-gray-500">Tối đa 500 ký tự</span>
+                    <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input type="checkbox" id="commentAnonymous" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                        <span>Ẩn danh</span>
+                    </label>
+                </div>
                 <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors">
                     Gửi bình luận
                 </button>
@@ -368,12 +422,15 @@ async function loadReviews() {
 }
 
 function renderReview(review) {
+    // Check if review is anonymous
+    const displayName = review.is_anonymous ? 'Ẩn danh' : (review.users?.username || review.username || 'Ẩn danh');
+
     return `
         <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
             <div class="flex justify-between items-start mb-3">
                 <div class="flex items-center gap-2">
-                    <span class="font-semibold text-gray-900">${review.username || 'Ẩn danh'}</span>
-                    ${review.user_role ? UIComponents.createRoleBadge(review.user_role) : ''}
+                    <span class="font-semibold text-gray-900">${displayName}</span>
+                    ${!review.is_anonymous && review.user_role ? UIComponents.createRoleBadge(review.user_role) : ''}
                     ${review.rating ? `<span class="ml-2">${UIComponents.createStarRating(review.rating, 5, false)}</span>` : ''}
                 </div>
                 <span class="text-xs text-gray-500">${new Date(review.created_at).toLocaleDateString('vi-VN')}</span>
@@ -414,7 +471,13 @@ function renderReviewFooter() {
                 required
             ></textarea>
             <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-500">Tối đa 2000 ký tự</span>
+                <div class="flex items-center gap-4">
+                    <span class="text-xs text-gray-500">Tối đa 2000 ký tự</span>
+                    <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input type="checkbox" id="reviewAnonymous" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                        <span>Ẩn danh</span>
+                    </label>
+                </div>
                 <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors">
                     Gửi đánh giá
                 </button>
@@ -439,7 +502,7 @@ function initModalEventHandlers() {
             let result;
             if (hasNominated) {
                 // Remove nomination
-                result = await db.nominations.remove(currentNovel.id);
+                result = await db.nominations.delete(currentNovel.id);
                 if (result.success) {
                     showToast('Đã hủy đề cử truyện', 'success');
                 }
@@ -466,13 +529,17 @@ function initModalEventHandlers() {
             e.preventDefault();
 
             const content = document.getElementById('commentInput').value.trim();
+            const isAnonymous = document.getElementById('commentAnonymous')?.checked || false;
             if (!content || !currentNovel) return;
 
-            const result = await db.comments.create(currentNovel.id, content);
+            const result = await db.comments.create(currentNovel.id, content, isAnonymous);
 
             if (result.success) {
                 showToast('Đã gửi bình luận!', 'success');
                 document.getElementById('commentInput').value = '';
+                if (document.getElementById('commentAnonymous')) {
+                    document.getElementById('commentAnonymous').checked = false;
+                }
                 await loadComments();
             } else {
                 showToast(result.error || 'Không thể gửi bình luận', 'error');
@@ -485,22 +552,133 @@ function initModalEventHandlers() {
         if (e.target.id === 'reviewForm') {
             e.preventDefault();
 
-            const title = document.getElementById('reviewTitle').value.trim();
             const content = document.getElementById('reviewContent').value.trim();
+            const isAnonymous = document.getElementById('reviewAnonymous')?.checked || false;
             if (!content || !currentNovel) return;
 
-            const result = await db.reviews.create(currentNovel.id, content, title);
+            const result = await db.reviews.upsert(currentNovel.id, content, isAnonymous);
 
             if (result.success) {
                 showToast('Đã gửi đánh giá!', 'success');
                 document.getElementById('reviewTitle').value = '';
                 document.getElementById('reviewContent').value = '';
+                if (document.getElementById('reviewAnonymous')) {
+                    document.getElementById('reviewAnonymous').checked = false;
+                }
                 await loadReviews();
             } else {
                 showToast(result.error || 'Không thể gửi đánh giá', 'error');
             }
         }
     });
+}
+
+// =====================================================
+// THREADED COMMENT REPLY FUNCTIONS
+// =====================================================
+
+// Toggle reply form visibility
+window.toggleReplyForm = function(commentId) {
+    const replyForm = document.getElementById(`replyForm-${commentId}`);
+    if (replyForm) {
+        replyForm.classList.toggle('hidden');
+        // Focus on textarea when showing
+        if (!replyForm.classList.contains('hidden')) {
+            document.getElementById(`replyInput-${commentId}`)?.focus();
+        }
+    }
+};
+
+// Cancel reply
+window.cancelReply = function(commentId) {
+    const replyForm = document.getElementById(`replyForm-${commentId}`);
+    const replyInput = document.getElementById(`replyInput-${commentId}`);
+    const replyAnonymous = document.getElementById(`replyAnonymous-${commentId}`);
+
+    if (replyForm) replyForm.classList.add('hidden');
+    if (replyInput) replyInput.value = '';
+    if (replyAnonymous) replyAnonymous.checked = false;
+};
+
+// Submit reply
+window.submitReply = async function(parentCommentId) {
+    const content = document.getElementById(`replyInput-${parentCommentId}`)?.value.trim();
+    const isAnonymous = document.getElementById(`replyAnonymous-${parentCommentId}`)?.checked || false;
+
+    if (!content || !currentNovel) return;
+
+    const result = await db.comments.create(currentNovel.id, content, isAnonymous, parentCommentId);
+
+    if (result.success) {
+        showToast('Đã gửi trả lời!', 'success');
+        cancelReply(parentCommentId);
+        await loadReplies(parentCommentId);
+    } else {
+        showToast(result.error || 'Không thể gửi trả lời', 'error');
+    }
+};
+
+// Load replies for a comment
+async function loadReplies(commentId) {
+    const result = await db.comments.getReplies(commentId);
+    const repliesContainer = document.getElementById(`replies-${commentId}`);
+    const toggleButton = document.getElementById(`toggleReplies-${commentId}`);
+
+    if (!result.success || !repliesContainer) return;
+
+    const replies = result.data || [];
+
+    if (replies.length === 0) {
+        repliesContainer.innerHTML = '';
+        if (toggleButton) toggleButton.innerHTML = '';
+        return;
+    }
+
+    // Render replies (initially hidden)
+    repliesContainer.innerHTML = `
+        <div id="repliesContent-${commentId}" class="hidden">
+            ${replies.map(reply => renderComment(reply, true)).join('')}
+        </div>
+    `;
+
+    // Add toggle button
+    if (toggleButton) {
+        toggleButton.innerHTML = `
+            <button onclick="toggleReplies('${commentId}')" class="text-sm text-blue-600 hover:text-blue-800 font-medium mt-2">
+                <span id="toggleText-${commentId}">▶ Xem ${replies.length} câu trả lời</span>
+            </button>
+        `;
+    }
+}
+
+// Toggle replies visibility
+window.toggleReplies = function(commentId) {
+    const repliesContent = document.getElementById(`repliesContent-${commentId}`);
+    const toggleText = document.getElementById(`toggleText-${commentId}`);
+
+    if (!repliesContent || !toggleText) return;
+
+    const isHidden = repliesContent.classList.contains('hidden');
+    const replyCount = repliesContent.querySelectorAll('[data-comment-id]').length;
+
+    if (isHidden) {
+        repliesContent.classList.remove('hidden');
+        toggleText.textContent = `▼ Ẩn ${replyCount} câu trả lời`;
+    } else {
+        repliesContent.classList.add('hidden');
+        toggleText.textContent = `▶ Xem ${replyCount} câu trả lời`;
+    }
+};
+
+// Load all replies when comments are loaded
+async function loadAllReplies() {
+    const commentElements = document.querySelectorAll('[data-comment-id]');
+    for (const element of commentElements) {
+        const commentId = element.dataset.commentId;
+        if (commentId && !element.classList.contains('ml-8')) { // Only for top-level comments
+            await loadReplies(commentId);
+        }
+    }
 }
 
 // Initialize modal

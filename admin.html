@@ -32,14 +32,11 @@
         <!-- Tab Navigation -->
         <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-green-100 mb-6">
             <div class="flex border-b border-green-100 overflow-x-auto">
-                <button id="tabPendingMembers" class="tab-button active px-6 py-4 font-semibold transition-colors whitespace-nowrap">
-                    ⏳ Thành viên chờ duyệt
-                </button>
-                <button id="tabPendingNovels" class="tab-button px-6 py-4 font-semibold transition-colors whitespace-nowrap">
+                <button id="tabPendingNovels" class="tab-button active px-6 py-4 font-semibold transition-colors whitespace-nowrap">
                     📖 Truyện chờ duyệt
                 </button>
-                <button id="tabTranslatorRequests" class="tab-button px-6 py-4 font-semibold transition-colors whitespace-nowrap">
-                    ✍️ Yêu cầu dịch giả
+                <button id="tabRoleUpgradeRequests" class="tab-button px-6 py-4 font-semibold transition-colors whitespace-nowrap">
+                    ✍️ Yêu cầu nâng cấp vai trò
                 </button>
                 <button id="tabUsers" class="tab-button px-6 py-4 font-semibold transition-colors whitespace-nowrap">
                     👥 Người dùng
@@ -54,21 +51,8 @@
 
             <!-- Tab Content -->
             <div class="p-6">
-                <!-- Pending Members Tab -->
-                <div id="contentPendingMembers" class="tab-content">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold text-gray-800">Thành viên chờ duyệt</h2>
-                        <button id="refreshPendingMembers" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
-                            🔄 Làm mới
-                        </button>
-                    </div>
-                    <div id="pendingMembersTable" class="overflow-x-auto">
-                        <!-- Will be populated by JavaScript -->
-                    </div>
-                </div>
-
                 <!-- Pending Novels Tab -->
-                <div id="contentPendingNovels" class="tab-content hidden">
+                <div id="contentPendingNovels" class="tab-content">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-xl font-bold text-gray-800">Truyện chờ duyệt</h2>
                         <button id="refreshPendingNovels" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
@@ -80,15 +64,15 @@
                     </div>
                 </div>
 
-                <!-- Translator Requests Tab -->
-                <div id="contentTranslatorRequests" class="tab-content hidden">
+                <!-- Role Upgrade Requests Tab -->
+                <div id="contentRoleUpgradeRequests" class="tab-content hidden">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold text-gray-800">Yêu cầu nâng cấp dịch giả</h2>
-                        <button id="refreshTranslatorRequests" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                        <h2 class="text-xl font-bold text-gray-800">Yêu cầu nâng cấp vai trò</h2>
+                        <button id="refreshRoleUpgradeRequests" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
                             🔄 Làm mới
                         </button>
                     </div>
-                    <div id="translatorRequestsTable" class="overflow-x-auto">
+                    <div id="roleUpgradeRequestsTable" class="overflow-x-auto">
                         <!-- Will be populated by JavaScript -->
                     </div>
                 </div>

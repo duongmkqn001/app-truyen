@@ -43,10 +43,10 @@ async function initAuth() {
     }
     
     const profile = await db.auth.getUserProfile(user.id);
-    
-    // Check if user is pending approval
-    if (profile && profile.role === 'pending_approval') {
-        UIComponents.showToast('Tài khoản của bạn đang chờ duyệt. Bạn chưa thể tải lên truyện.', 'error');
+
+    // Check if user is banned
+    if (profile && profile.is_banned) {
+        UIComponents.showToast('Tài khoản của bạn đã bị khóa. Bạn không thể tải lên truyện.', 'error');
         setTimeout(() => {
             window.location.href = 'index.html';
         }, 3000);
@@ -57,8 +57,7 @@ async function initAuth() {
         <div class="flex items-center gap-3">
             <a href="profile.html" class="text-gray-700 hover:text-green-600">👤 ${profile?.username || user.email}</a>
             ${UIComponents.createRoleBadge(profile?.role || 'reader')}
-            ${profile?.role === 'admin' ? '<a href="admin.html" class="text-blue-600 hover:underline">Quản trị</a>' : ''}
-            ${profile?.role === 'admin' ? '<a href="admin-users.html" class="text-purple-600 hover:underline">Người dùng</a>' : ''}
+            ${['admin', 'super_admin', 'sub_admin'].includes(profile?.role) ? '<a href="admin.html" class="text-blue-600 hover:underline">Quản trị</a>' : ''}
             <button onclick="logout()" class="text-red-600 hover:underline">Đăng xuất</button>
         </div>
     `;
