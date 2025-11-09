@@ -159,10 +159,26 @@ body {
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .tag-btn:active {
     transform: scale(0.95);
+}
+
+/* Touch-friendly button styles */
+.touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile-specific tag button sizing */
+@media (max-width: 768px) {
+    .tag-btn {
+        min-height: 44px; /* iOS recommended minimum touch target */
+        min-width: 44px;
+    }
 }
 
 /* Tag category sections */

@@ -544,8 +544,22 @@ async function editNovel(novelId) {
         document.getElementById('editNovelUrl').value = novel.novel_url || '';
         document.getElementById('editSummary').value = novel.summary || '';
 
-        // Render tags
-        renderEditTags(novel.tags || []);
+        // Render tags - handle both old format (tag_ids array) and new format (tags JSON array)
+        let selectedTags = [];
+        if (novel.tags && Array.isArray(novel.tags)) {
+            // New format: tags is a JSON array of tag objects
+            selectedTags = novel.tags;
+        } else if (novel.tag_ids && Array.isArray(novel.tag_ids)) {
+            // Fallback: construct tag objects from tag_ids, tag_names, and tag_colors arrays
+            selectedTags = novel.tag_ids.map((id, index) => ({
+                id: id,
+                name: novel.tag_names?.[index] || '',
+                color: novel.tag_colors?.[index] || '#10b981'
+            }));
+        }
+
+        console.log('Novel tags for editing:', selectedTags);
+        renderEditTags(selectedTags);
 
         // Show modal
         document.getElementById('editNovelModal').classList.remove('hidden');

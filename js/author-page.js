@@ -342,7 +342,7 @@ function renderAvailableTags() {
 
         return `
             <button
-                class="tag-filter-btn ${opacity} transition-all px-3 py-1.5 rounded-full text-sm font-medium text-white shadow-sm hover:shadow-md"
+                class="tag-filter-btn ${opacity} transition-all px-4 py-2 md:px-3 md:py-1.5 rounded-full text-base md:text-sm font-medium text-white shadow-md hover:shadow-lg active:scale-95 touch-manipulation"
                 style="background-color: ${tag.color};"
                 data-tag-id="${tag.id}"
                 data-tag-name="${tag.name}"
@@ -374,10 +374,10 @@ function renderSelectedTags() {
     const selectedTagObjects = availableTags.filter(tag => selectedTags.includes(tag.id));
 
     list.innerHTML = selectedTagObjects.map(tag => `
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium text-white shadow-sm"
+        <div class="flex items-center gap-2 px-4 py-2 md:px-3 md:py-1.5 rounded-full text-base md:text-sm font-medium text-white shadow-md"
              style="background-color: ${tag.color};">
             <span>${tag.name}</span>
-            <button class="remove-tag-btn hover:bg-white/20 rounded-full p-0.5 transition-colors"
+            <button class="remove-tag-btn hover:bg-white/20 active:bg-white/30 rounded-full p-1 md:p-0.5 transition-colors touch-manipulation"
                     data-tag-id="${tag.id}">
                 ✕
             </button>

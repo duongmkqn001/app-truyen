@@ -115,14 +115,14 @@ function displayAllTags() {
                         const isIncluded = includeTags.includes(tag.id);
                         const isExcluded = excludeTags.includes(tag.id);
 
-                        let classes = 'tag-btn px-3 py-1.5 rounded-md text-sm font-medium border transition-all cursor-pointer';
+                        let classes = 'tag-btn px-4 py-2.5 md:px-3 md:py-1.5 rounded-lg md:rounded-md text-base md:text-sm font-medium border-2 md:border transition-all cursor-pointer touch-manipulation';
 
                         if (isIncluded) {
-                            classes += ' bg-green-600 text-white border-green-600 shadow-sm';
+                            classes += ' bg-green-600 text-white border-green-600 shadow-md';
                         } else if (isExcluded) {
-                            classes += ' bg-red-600 text-white border-red-600 shadow-sm';
+                            classes += ' bg-red-600 text-white border-red-600 shadow-md';
                         } else {
-                            classes += ' bg-white text-gray-700 border-gray-300 hover:border-green-500 hover:bg-green-50';
+                            classes += ' bg-white text-gray-700 border-gray-300 hover:border-green-500 hover:bg-green-50 active:scale-95';
                         }
 
                         return `
@@ -133,7 +133,10 @@ function displayAllTags() {
                                 data-tag-name="${tag.name}"
                                 onclick="handleTagClick(${tag.id}, '${tag.name}')"
                                 oncontextmenu="handleTagRightClick(event, ${tag.id}, '${tag.name}')"
-                                title="Click trái: Chọn | Click phải: Loại trừ"
+                                ontouchstart="handleTagTouchStart(event, ${tag.id}, '${tag.name}')"
+                                ontouchend="handleTagTouchEnd(event)"
+                                ontouchcancel="handleTagTouchCancel(event)"
+                                title="Nhấn: Chọn | Giữ lâu: Loại trừ"
                             >
                                 ${tag.name}
                             </button>
@@ -157,7 +160,17 @@ function displayAllTags() {
 // TAG SELECTION
 // =====================================================
 
+// Track long press for mobile
+let longPressTimer = null;
+let isLongPress = false;
+
 function handleTagClick(tagId, tagName) {
+    // Ignore if this was a long press
+    if (isLongPress) {
+        isLongPress = false;
+        return;
+    }
+
     // Left click: Add to include list or remove if already included
     if (includeTags.includes(tagId)) {
         // Remove from include
@@ -193,6 +206,35 @@ function handleTagRightClick(event, tagId, tagName) {
     updateTagDisplays();
 }
 
+// Mobile-friendly long press handler
+function handleTagTouchStart(event, tagId, tagName) {
+    isLongPress = false;
+    longPressTimer = setTimeout(() => {
+        isLongPress = true;
+        // Trigger haptic feedback if available
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+        // Trigger exclude action (same as right-click)
+        handleTagRightClick(event, tagId, tagName);
+    }, 500); // 500ms long press
+}
+
+function handleTagTouchEnd(event) {
+    if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+    }
+}
+
+function handleTagTouchCancel(event) {
+    if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+    }
+    isLongPress = false;
+}
+
 function removeIncludeTag(tagId) {
     includeTags = includeTags.filter(id => id !== tagId);
     updateTagDisplays();
@@ -224,9 +266,9 @@ function displayIncludeTags() {
     const selectedTags = allTags.filter(tag => includeTags.includes(tag.id));
 
     container.innerHTML = selectedTags.map(tag => `
-        <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-green-600 text-white rounded-full text-sm font-medium shadow-sm">
+        <span class="inline-flex items-center gap-2 px-4 py-2 md:px-3 md:py-1.5 bg-green-600 text-white rounded-full text-base md:text-sm font-medium shadow-md">
             ${tag.name}
-            <button type="button" onclick="removeIncludeTag(${tag.id})" class="hover:bg-green-700 rounded-full p-0.5 transition-colors">
+            <button type="button" onclick="removeIncludeTag(${tag.id})" class="hover:bg-green-700 active:bg-green-800 rounded-full p-1 md:p-0.5 transition-colors touch-manipulation">
                 ✕
             </button>
         </span>
@@ -248,9 +290,9 @@ function displayExcludeTags() {
     const selectedTags = allTags.filter(tag => excludeTags.includes(tag.id));
 
     container.innerHTML = selectedTags.map(tag => `
-        <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white rounded-full text-sm font-medium shadow-sm">
+        <span class="inline-flex items-center gap-2 px-4 py-2 md:px-3 md:py-1.5 bg-red-600 text-white rounded-full text-base md:text-sm font-medium shadow-md">
             ${tag.name}
-            <button type="button" onclick="removeExcludeTag(${tag.id})" class="hover:bg-red-700 rounded-full p-0.5 transition-colors">
+            <button type="button" onclick="removeExcludeTag(${tag.id})" class="hover:bg-red-700 active:bg-red-800 rounded-full p-1 md:p-0.5 transition-colors touch-manipulation">
                 ✕
             </button>
         </span>

@@ -37,6 +37,7 @@ This folder contains SQL migration files for the Vietnamese Novel Platform datab
 19. **019_fix_likes_rls_policy.sql** - Fix 403 error when liking/disliking comments (CRITICAL)
 20. **020_fix_role_upgrade_constraint.sql** - Fix 400 error when requesting translator role (CRITICAL)
 21. **021_fix_role_upgrade_rls_policies.sql** - Fix RLS policies preventing admins from viewing role upgrade requests (CRITICAL)
+22. **022_fix_novels_with_stats_tags.sql** - Fix novels_with_stats view to include tag_ids and tags JSON for proper tag pre-selection in edit forms (CRITICAL)
 
 ## How to Run Migrations
 
