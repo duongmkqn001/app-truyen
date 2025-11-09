@@ -1,0 +1,303 @@
+/* =====================================================
+   THEME VARIABLES - CSS Custom Properties
+   ===================================================== */
+/* These variables are dynamically set by theme-manager.js */
+
+:root {
+    /* Default theme: Mint Green */
+    --color-primary50: #f0fdf4;
+    --color-primary100: #dcfce7;
+    --color-primary200: #bbf7d0;
+    --color-primary300: #86efac;
+    --color-primary400: #4ade80;
+    --color-primary500: #22c55e;
+    --color-primary600: #16a34a;
+    --color-primary700: #15803d;
+    --color-primary800: #166534;
+    --color-primary900: #14532d;
+    
+    --color-accent50: #f0fdfa;
+    --color-accent100: #ccfbf1;
+    --color-accent200: #99f6e4;
+    --color-accent300: #5eead4;
+    
+    --color-bgGradientStart: #f0fdf4;
+    --color-bgGradientMid: #ecfdf5;
+    --color-bgGradientEnd: #f0fdfa;
+    
+    --color-cardBorder: #d1fae5;
+    --color-scrollbarTrack: #f0fdf4;
+    --color-scrollbarThumb: #86efac;
+    --color-scrollbarThumbHover: #4ade80;
+    
+    --color-primaryHex: #10b981;
+    --color-primaryDarkHex: #059669;
+}
+
+/* =====================================================
+   THEME-AWARE COMPONENT STYLES
+   ===================================================== */
+
+/* Body background - uses theme gradient */
+body {
+    background: linear-gradient(to bottom right, var(--color-bgGradientStart), var(--color-bgGradientMid), var(--color-bgGradientEnd)) !important;
+}
+
+/* Card borders */
+.card-style,
+.bg-white\/90 {
+    border-color: var(--color-cardBorder) !important;
+}
+
+/* Scrollbar theming */
+.table-container::-webkit-scrollbar-track {
+    background-color: var(--color-scrollbarTrack);
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background-color: var(--color-scrollbarThumb);
+    border: 2px solid var(--color-scrollbarTrack);
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-scrollbarThumbHover);
+}
+
+/* Primary color buttons and links */
+.btn-primary,
+.bg-green-600 {
+    background-color: var(--color-primary600) !important;
+}
+
+.btn-primary:hover,
+.bg-green-600:hover,
+.hover\:bg-green-700:hover {
+    background-color: var(--color-primary700) !important;
+}
+
+.bg-green-500 {
+    background-color: var(--color-primary500) !important;
+}
+
+.bg-green-50 {
+    background-color: var(--color-primary50) !important;
+}
+
+.bg-green-100 {
+    background-color: var(--color-primary100) !important;
+}
+
+.bg-green-200 {
+    background-color: var(--color-primary200) !important;
+}
+
+/* Text colors */
+.text-green-600 {
+    color: var(--color-primary600) !important;
+}
+
+.text-green-700 {
+    color: var(--color-primary700) !important;
+}
+
+.text-green-800 {
+    color: var(--color-primary800) !important;
+}
+
+.text-green-900 {
+    color: var(--color-primary900) !important;
+}
+
+/* Border colors */
+.border-green-100 {
+    border-color: var(--color-primary100) !important;
+}
+
+.border-green-200 {
+    border-color: var(--color-primary200) !important;
+}
+
+.border-green-300 {
+    border-color: var(--color-primary300) !important;
+}
+
+.border-green-500 {
+    border-color: var(--color-primary500) !important;
+}
+
+.border-green-600 {
+    border-color: var(--color-primary600) !important;
+}
+
+/* Hover border colors */
+.hover\:border-green-500:hover {
+    border-color: var(--color-primary500) !important;
+}
+
+/* Hover background colors */
+.hover\:bg-green-50:hover {
+    background-color: var(--color-primary50) !important;
+}
+
+.hover\:bg-green-600:hover {
+    background-color: var(--color-primary600) !important;
+}
+
+.hover\:bg-green-700:hover {
+    background-color: var(--color-primary700) !important;
+}
+
+/* Active states */
+.active\:bg-green-700:active {
+    background-color: var(--color-primary700) !important;
+}
+
+.active\:bg-green-800:active {
+    background-color: var(--color-primary800) !important;
+}
+
+/* Hover text colors */
+.hover\:text-green-600:hover {
+    color: var(--color-primary600) !important;
+}
+
+.hover\:text-green-700:hover {
+    color: var(--color-primary700) !important;
+}
+
+/* Focus ring colors */
+.focus\:ring-green-400:focus,
+.focus\:ring-green-500:focus {
+    --tw-ring-color: var(--color-primary400) !important;
+}
+
+/* Gradient backgrounds */
+.from-green-50 {
+    --tw-gradient-from: var(--color-primary50) !important;
+}
+
+.to-green-50,
+.via-mint-50 {
+    --tw-gradient-to: var(--color-primary50) !important;
+}
+
+/* Tag button specific styles */
+.tag-btn.bg-green-600 {
+    background-color: var(--color-primary600) !important;
+    border-color: var(--color-primary600) !important;
+}
+
+.tag-btn.hover\:bg-green-50:hover {
+    background-color: var(--color-primary50) !important;
+}
+
+.tag-btn:not(.bg-green-600):not(.bg-red-600):hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Navigation active states */
+nav a.bg-green-100 {
+    background-color: var(--color-primary100) !important;
+}
+
+nav a.text-green-800 {
+    color: var(--color-primary800) !important;
+}
+
+/* Badge colors for rankings */
+.bg-green-200 {
+    background-color: var(--color-primary200) !important;
+}
+
+.text-green-800 {
+    color: var(--color-primary800) !important;
+}
+
+/* Gradient backgrounds for cards */
+.bg-gradient-to-r.from-green-50 {
+    background-image: linear-gradient(to right, var(--color-primary50), var(--color-accent50)) !important;
+}
+
+/* Auth tab styling */
+.bg-white.text-green-700 {
+    color: var(--color-primary700) !important;
+}
+
+/* Upload form specific */
+.bg-green-50 {
+    background-color: var(--color-primary50) !important;
+}
+
+/* Selected tag badges in search-by-tag */
+#includeTagsContainer span,
+#excludeTagsContainer span {
+    animation: slideIn 0.2s ease-out;
+}
+
+/* Theme selector specific styles */
+#themeSelectorContainer .theme-btn {
+    transition: all 0.2s ease;
+}
+
+#themeSelectorContainer .theme-btn:hover {
+    transform: scale(1.05);
+}
+
+#themeSelectorContainer .theme-btn:active {
+    transform: scale(0.95);
+}
+
+/* Ensure theme selector is always visible */
+#themeSelectorContainer {
+    pointer-events: auto;
+}
+
+/* Mobile responsive theme selector */
+@media (max-width: 640px) {
+    #themeSelectorContainer {
+        bottom: 1rem;
+        right: 1rem;
+    }
+    
+    #themeSelectorContainer .bg-white\/95 {
+        padding: 0.5rem;
+    }
+    
+    #themeSelectorContainer .theme-btn {
+        padding: 0.5rem;
+    }
+}
+
+/* Smooth transitions for theme changes */
+body,
+.card-style,
+.bg-white\/90,
+button,
+a,
+.tag-btn {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Override inline styles for theme compatibility */
+[style*="color: #059669"],
+[style*="color: #10b981"] {
+    color: var(--color-primaryDarkHex) !important;
+}
+
+[style*="background-color: #10b981"],
+[style*="background-color: #059669"] {
+    background-color: var(--color-primary600) !important;
+}
+
+/* Ensure proper contrast for all themes */
+.text-gray-800,
+.text-gray-700,
+.text-gray-600 {
+    /* Keep gray text as-is for readability */
+}
+
+/* Success toast notification */
+.bg-green-500 {
+    background-color: var(--color-primary500) !important;
+}
+

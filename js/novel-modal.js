@@ -264,11 +264,19 @@ async function renderInfoFooter() {
 
     const nominateButtonText = hasNominated ? '✓ Đã đề cử' : '🔥 Đề cử truyện này';
 
+    // Get bookmark button HTML
+    const bookmarkButtonHTML = await UIComponents.createBookmarkButton(currentNovel.id, {
+        size: 'lg',
+        showText: true,
+        className: 'flex-1'
+    });
+
     return `
-        <div class="flex gap-3">
+        <div class="flex gap-3 flex-wrap">
             <button id="nominateBtn" class="${nominateButtonClass}" data-nominated="${hasNominated}">
                 ${nominateButtonText}
             </button>
+            ${bookmarkButtonHTML}
             ${currentNovel.novel_url ? `
             <a href="${currentNovel.novel_url}" target="_blank" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg text-center transition-colors">
                 📖 Đọc truyện

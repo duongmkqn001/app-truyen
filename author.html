@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/theme-variables.css">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="bg-gradient-to-br from-green-50 via-mint-50 to-teal-50 text-gray-800 py-4" style="background: linear-gradient(to bottom right, #f0fdf4, #ecfdf5, #f0fdfa);">
@@ -45,6 +46,9 @@
                         </a>
                         <a href="ranking.html" class="block px-4 py-2.5 rounded-lg hover:bg-green-50 text-gray-700 transition-colors">
                             🏆 Bảng xếp hạng
+                        </a>
+                        <a href="my-reading-list.html" class="block px-4 py-2.5 rounded-lg hover:bg-green-50 text-gray-700 transition-colors">
+                            📖 Danh sách đọc
                         </a>
                         <a href="upload.html" class="block px-4 py-2.5 rounded-lg hover:bg-green-50 text-gray-700 transition-colors">
                             📤 Tải lên truyện
@@ -190,6 +194,7 @@
     </div>
 
     <!-- Supabase and App Scripts -->
+    <script src="js/theme-manager.js"></script>
     <script src="js/config.js"></script>
     <script src="js/database.js"></script>
     <script src="js/admin.js"></script>

@@ -332,7 +332,7 @@ function initReportSystem() {
 // TOAST NOTIFICATION
 // =====================================================
 
-function showToast(message, type = 'info') {
+function showToast(message, type = 'info', duration = 3000) {
     const bgColors = {
         success: 'bg-green-500',
         error: 'bg-red-500',
@@ -340,16 +340,264 @@ function showToast(message, type = 'info') {
         warning: 'bg-yellow-500'
     };
 
+    const icons = {
+        success: '✓',
+        error: '✕',
+        info: 'ℹ',
+        warning: '⚠'
+    };
+
     const toast = document.createElement('div');
-    toast.className = `fixed bottom-4 right-4 ${bgColors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-y-0 opacity-100`;
-    toast.textContent = message;
+    toast.className = `fixed bottom-4 right-4 ${bgColors[type]} text-white px-6 py-4 rounded-lg shadow-2xl z-50 transform transition-all duration-300 translate-y-0 opacity-100 flex items-center gap-3`;
+    toast.style.minWidth = '300px';
+    toast.innerHTML = `
+        <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-white bg-opacity-20 rounded-full font-bold">
+            ${icons[type]}
+        </div>
+        <div class="flex-1 font-medium">${message}</div>
+    `;
 
     document.body.appendChild(toast);
 
+    // Animate in
     setTimeout(() => {
-        toast.classList.add('translate-y-2', 'opacity-0');
+        toast.style.transform = 'translateY(0)';
+    }, 10);
+
+    // Animate out
+    setTimeout(() => {
+        toast.style.transform = 'translateY(8px)';
+        toast.style.opacity = '0';
         setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    }, duration);
+}
+
+// =====================================================
+// BOOKMARK/READING LIST BUTTON
+// =====================================================
+
+async function createBookmarkButton(novelId, options = {}) {
+    const {
+        size = 'md', // 'sm', 'md', 'lg'
+        showText = true,
+        className = ''
+    } = options;
+
+    // Check if novel is in reading list
+    const result = await db.readingList.isInList(novelId);
+    const inList = result.success ? result.inList : false;
+
+    const sizeClasses = {
+        sm: 'p-1.5 text-sm',
+        md: 'p-2 text-base',
+        lg: 'p-3 text-lg'
+    };
+
+    const iconSizeClasses = {
+        sm: 'w-4 h-4',
+        md: 'w-5 h-5',
+        lg: 'w-6 h-6'
+    };
+
+    const buttonId = `bookmark-btn-${novelId}`;
+
+    if (inList) {
+        // Already in reading list - show filled bookmark
+        return `
+            <button
+                id="${buttonId}"
+                onclick="toggleBookmark('${novelId}')"
+                class="bookmark-btn bookmark-btn-transition ${sizeClasses[size]} bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 ${className}"
+                title="Xóa khỏi danh sách đọc">
+                <div class="flex items-center gap-1">
+                    <svg class="${iconSizeClasses[size]} transition-transform duration-300" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
+                    </svg>
+                    ${showText ? '<span class="text-sm font-medium">Đã lưu</span>' : ''}
+                </div>
+            </button>
+        `;
+    } else {
+        // Not in reading list - show outline bookmark
+        return `
+            <button
+                id="${buttonId}"
+                onclick="toggleBookmark('${novelId}')"
+                class="bookmark-btn bookmark-btn-transition ${sizeClasses[size]} bg-gray-100 hover:bg-yellow-500 hover:text-white text-gray-700 rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 ${className}"
+                title="Thêm vào danh sách đọc">
+                <div class="flex items-center gap-1">
+                    <svg class="${iconSizeClasses[size]} transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                    </svg>
+                    ${showText ? '<span class="text-sm font-medium">Lưu</span>' : ''}
+                </div>
+            </button>
+        `;
+    }
+}
+
+// Toggle bookmark status
+async function toggleBookmark(novelId) {
+    const user = await db.auth.getCurrentUser();
+    if (!user) {
+        showToast('Vui lòng đăng nhập để sử dụng danh sách đọc', 'warning', 2500);
+        setTimeout(() => {
+            window.location.href = 'auth.html?redirect=' + encodeURIComponent(window.location.pathname);
+        }, 1500);
+        return;
+    }
+
+    const buttonId = `bookmark-btn-${novelId}`;
+    const button = document.getElementById(buttonId);
+
+    // Prevent multiple clicks - add loading state
+    if (button && button.disabled) return;
+    if (button) {
+        button.disabled = true;
+        button.style.opacity = '0.6';
+        button.style.cursor = 'wait';
+    }
+
+    // Check current status
+    const checkResult = await db.readingList.isInList(novelId);
+    if (!checkResult.success) {
+        showToast('Lỗi: ' + checkResult.error, 'error', 3500);
+        if (button) {
+            button.disabled = false;
+            button.style.opacity = '1';
+            button.style.cursor = 'pointer';
+        }
+        return;
+    }
+
+    const inList = checkResult.inList;
+
+    if (inList) {
+        // Remove from reading list
+        const result = await db.readingList.remove(novelId);
+        if (result.success) {
+            showToast('📖 Đã xóa khỏi danh sách đọc', 'success', 2500);
+            // Update button with animation
+            await updateBookmarkButton(novelId, true);
+        } else {
+            showToast('Lỗi: ' + result.error, 'error', 3500);
+        }
+    } else {
+        // Add to reading list
+        const result = await db.readingList.add(novelId);
+        if (result.success) {
+            showToast('📚 Đã thêm vào danh sách đọc', 'success', 2500);
+            // Update button with animation
+            await updateBookmarkButton(novelId, true);
+        } else {
+            showToast('Lỗi: ' + result.error, 'error', 3500);
+        }
+    }
+
+    // Re-enable button
+    if (button) {
+        button.disabled = false;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
+    }
+}
+
+// Update bookmark button appearance
+async function updateBookmarkButton(novelId, animate = false) {
+    const buttonId = `bookmark-btn-${novelId}`;
+    const button = document.getElementById(buttonId);
+    if (!button) return;
+
+    // Check current status
+    const result = await db.readingList.isInList(novelId);
+    const inList = result.success ? result.inList : false;
+
+    // Add animation class if requested
+    if (animate) {
+        // Pulse animation
+        button.style.animation = 'bookmarkPulse 0.5s ease-in-out';
+        setTimeout(() => {
+            button.style.animation = '';
+        }, 500);
+    }
+
+    if (inList) {
+        // Update to filled bookmark with smooth transition
+        button.style.transition = 'all 0.3s ease-in-out';
+        button.className = button.className.replace('bg-gray-100', 'bg-yellow-500');
+        button.className = button.className.replace('hover:bg-yellow-500', 'hover:bg-yellow-600');
+        button.className = button.className.replace('text-gray-700', 'text-white');
+        button.title = 'Xóa khỏi danh sách đọc';
+        button.innerHTML = `
+            <div class="flex items-center gap-1">
+                <svg class="w-5 h-5 transition-transform duration-300" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
+                </svg>
+                <span class="text-sm font-medium">Đã lưu</span>
+            </div>
+        `;
+    } else {
+        // Update to outline bookmark with smooth transition
+        button.style.transition = 'all 0.3s ease-in-out';
+        button.className = button.className.replace('bg-yellow-500', 'bg-gray-100');
+        button.className = button.className.replace('hover:bg-yellow-600', 'hover:bg-yellow-500');
+        button.className = button.className.replace('text-white', 'text-gray-700');
+        button.title = 'Thêm vào danh sách đọc';
+        button.innerHTML = `
+            <div class="flex items-center gap-1">
+                <svg class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                </svg>
+                <span class="text-sm font-medium">Lưu</span>
+            </div>
+        `;
+    }
+}
+
+// =====================================================
+// USER MENU COMPONENT
+// =====================================================
+
+async function renderUserMenu() {
+    const user = await db.auth.getCurrentUser();
+    const userMenuElements = document.querySelectorAll('#userMenu');
+
+    if (!user) {
+        userMenuElements.forEach(el => {
+            el.innerHTML = `
+                <a href="login.html" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                    Đăng nhập
+                </a>
+            `;
+        });
+        return;
+    }
+
+    const profile = await db.auth.getUserProfile(user.id);
+
+    const menuHTML = `
+        <div class="flex items-center gap-3">
+            <a href="my-reading-list.html" class="text-gray-700 hover:text-green-600 transition-colors" title="Danh sách đọc của tôi">
+                📖
+            </a>
+            <a href="profile.html" class="text-gray-700 hover:text-green-600 transition-colors">
+                👤 ${profile?.username || user.email}
+            </a>
+            ${createRoleBadge(profile?.role || 'reader')}
+            ${['admin', 'super_admin', 'sub_admin'].includes(profile?.role) ? '<a href="admin.html" class="text-blue-600 hover:underline">Quản trị</a>' : ''}
+            <button onclick="logoutUser()" class="text-red-600 hover:underline transition-colors">Đăng xuất</button>
+        </div>
+    `;
+
+    userMenuElements.forEach(el => {
+        el.innerHTML = menuHTML;
+    });
+}
+
+// Global logout function
+async function logoutUser() {
+    await db.auth.signOut();
+    window.location.href = 'index.html';
 }
 
 // =====================================================
@@ -368,6 +616,15 @@ window.UIComponents = {
     createStarRating,
     createLikeDislikeButtons,
     createReportButton,
+    createBookmarkButton,
     showToast
 };
+
+// Export bookmark functions globally
+window.toggleBookmark = toggleBookmark;
+window.updateBookmarkButton = updateBookmarkButton;
+
+// Export user menu functions globally
+window.renderUserMenu = renderUserMenu;
+window.logoutUser = logoutUser;
 

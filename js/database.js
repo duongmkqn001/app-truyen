@@ -1522,6 +1522,122 @@ const db = {
                 return { success: false, error: error.message };
             }
         }
+    },
+
+    // =====================================================
+    // READING LIST (BOOKMARKS)
+    // =====================================================
+
+    readingList: {
+        // Add novel to reading list
+        async add(novelId) {
+            try {
+                const user = await db.auth.getCurrentUser();
+                if (!user) throw new Error('Must be logged in to add to reading list');
+
+                const { data, error } = await supabaseClient
+                    .from('user_reading_lists')
+                    .insert({
+                        user_id: user.id,
+                        novel_id: novelId
+                    })
+                    .select()
+                    .single();
+
+                if (error) {
+                    // Check if already exists (unique constraint violation)
+                    if (error.code === '23505') {
+                        return { success: false, error: 'Novel already in reading list' };
+                    }
+                    throw error;
+                }
+
+                return { success: true, data };
+            } catch (error) {
+                console.error('Add to reading list error:', error);
+                return { success: false, error: error.message };
+            }
+        },
+
+        // Remove novel from reading list
+        async remove(novelId) {
+            try {
+                const user = await db.auth.getCurrentUser();
+                if (!user) throw new Error('Must be logged in');
+
+                const { error } = await supabaseClient
+                    .from('user_reading_lists')
+                    .delete()
+                    .eq('user_id', user.id)
+                    .eq('novel_id', novelId);
+
+                if (error) throw error;
+                return { success: true };
+            } catch (error) {
+                console.error('Remove from reading list error:', error);
+                return { success: false, error: error.message };
+            }
+        },
+
+        // Get user's reading list with novel details
+        async getAll() {
+            try {
+                const user = await db.auth.getCurrentUser();
+                if (!user) throw new Error('Must be logged in');
+
+                const { data, error } = await supabaseClient
+                    .from('user_reading_lists_with_details')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                return { success: true, data: data || [] };
+            } catch (error) {
+                console.error('Get reading list error:', error);
+                return { success: false, error: error.message };
+            }
+        },
+
+        // Check if novel is in reading list
+        async isInList(novelId) {
+            try {
+                const user = await db.auth.getCurrentUser();
+                if (!user) return { success: true, inList: false };
+
+                const { data, error } = await supabaseClient
+                    .from('user_reading_lists')
+                    .select('id')
+                    .eq('user_id', user.id)
+                    .eq('novel_id', novelId)
+                    .maybeSingle();
+
+                if (error) throw error;
+                return { success: true, inList: !!data };
+            } catch (error) {
+                console.error('Check reading list error:', error);
+                return { success: false, error: error.message };
+            }
+        },
+
+        // Get reading list count for current user
+        async getCount() {
+            try {
+                const user = await db.auth.getCurrentUser();
+                if (!user) return { success: true, count: 0 };
+
+                const { count, error } = await supabaseClient
+                    .from('user_reading_lists')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_id', user.id);
+
+                if (error) throw error;
+                return { success: true, count: count || 0 };
+            } catch (error) {
+                console.error('Get reading list count error:', error);
+                return { success: false, error: error.message };
+            }
+        }
     }
 };
 
