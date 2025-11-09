@@ -133,8 +133,8 @@ function displayAllTags() {
                                 data-tag-name="${tag.name}"
                                 onclick="handleTagClick(${tag.id}, '${tag.name}')"
                                 oncontextmenu="handleTagRightClick(event, ${tag.id}, '${tag.name}')"
-                                ontouchstart="handleTagTouchStart(event, ${tag.id}, '${tag.name}')"
-                                ontouchend="handleTagTouchEnd(event)"
+                                ontouchstart="handleTagTouchStart(event, ${tag.id}, '${tag.name}'); return false;"
+                                ontouchend="handleTagTouchEnd(event, ${tag.id}, '${tag.name}')"
                                 ontouchcancel="handleTagTouchCancel(event)"
                                 title="Nhấn: Chọn | Giữ lâu: Loại trừ"
                             >
@@ -165,12 +165,6 @@ let longPressTimer = null;
 let isLongPress = false;
 
 function handleTagClick(tagId, tagName) {
-    // Ignore if this was a long press
-    if (isLongPress) {
-        isLongPress = false;
-        return;
-    }
-
     // Left click: Add to include list or remove if already included
     if (includeTags.includes(tagId)) {
         // Remove from include
@@ -209,22 +203,48 @@ function handleTagRightClick(event, tagId, tagName) {
 // Mobile-friendly long press handler
 function handleTagTouchStart(event, tagId, tagName) {
     isLongPress = false;
+
+    // Prevent default to avoid triggering click on long press
+    event.preventDefault();
+
     longPressTimer = setTimeout(() => {
         isLongPress = true;
         // Trigger haptic feedback if available
         if (navigator.vibrate) {
             navigator.vibrate(50);
         }
-        // Trigger exclude action (same as right-click)
-        handleTagRightClick(event, tagId, tagName);
+        // Trigger exclude action directly (don't pass stale event)
+        // Right click: Add to exclude list or remove if already excluded
+        if (excludeTags.includes(tagId)) {
+            // Remove from exclude
+            excludeTags = excludeTags.filter(id => id !== tagId);
+        } else if (includeTags.includes(tagId)) {
+            // Move from include to exclude
+            includeTags = includeTags.filter(id => id !== tagId);
+            excludeTags.push(tagId);
+        } else {
+            // Add to exclude
+            excludeTags.push(tagId);
+        }
+
+        updateTagDisplays();
     }, 500); // 500ms long press
 }
 
-function handleTagTouchEnd(event) {
+function handleTagTouchEnd(event, tagId, tagName) {
+    // If timer is still running, it was a short tap (not a long press)
     if (longPressTimer) {
         clearTimeout(longPressTimer);
         longPressTimer = null;
+
+        // Trigger normal click action if it wasn't a long press
+        if (!isLongPress) {
+            handleTagClick(tagId, tagName);
+        }
     }
+
+    // Reset long press flag
+    isLongPress = false;
 }
 
 function handleTagTouchCancel(event) {
