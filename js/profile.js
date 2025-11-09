@@ -11,6 +11,7 @@ async function init() {
     if (currentUser && userProfile) {
         displayProfileInfo();
         await loadRequestHistory();
+        await loadMyNovels();
         setupEventListeners();
     }
 }
@@ -72,7 +73,12 @@ function displayProfileInfo() {
     if (userProfile.role === 'admin' || userProfile.is_banned) {
         document.getElementById('roleUpgradeSection').style.display = 'none';
     }
-    
+
+    // Show "My Novels" section for translators and admins
+    if (['translator', 'admin', 'super_admin', 'sub_admin'].includes(userProfile.role)) {
+        document.getElementById('myNovelsSection').classList.remove('hidden');
+    }
+
     // Filter available roles based on current role
     filterAvailableRoles();
 }
@@ -107,6 +113,95 @@ function filterAvailableRoles() {
         select.innerHTML = '<option value="">Bạn đã đạt vai trò cao nhất</option>';
         select.disabled = true;
     }
+}
+
+// Load user's uploaded novels
+async function loadMyNovels() {
+    const container = document.getElementById('myNovelsContainer');
+
+    // Only load if user is translator or admin
+    if (!['translator', 'admin', 'super_admin', 'sub_admin'].includes(userProfile.role)) {
+        return;
+    }
+
+    const result = await db.novels.getByCreator(currentUser.id);
+
+    if (!result.success || result.data.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <p class="mb-3">Bạn chưa tải lên truyện nào</p>
+                <a href="upload.html" class="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                    Tải lên truyện đầu tiên
+                </a>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="space-y-4">
+            ${result.data.map(novel => {
+                const statusBadge = getNovelStatusBadge(novel.is_approved, novel.approval_status);
+                const createdDate = new Date(novel.created_at).toLocaleDateString('vi-VN');
+
+                return `
+                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div class="flex items-start gap-4">
+                            ${novel.cover_image_url ? `
+                                <img src="${novel.cover_image_url}"
+                                     alt="${novel.title}"
+                                     class="w-20 h-28 object-cover rounded-lg flex-shrink-0">
+                            ` : `
+                                <div class="w-20 h-28 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <span class="text-gray-400 text-2xl">📚</span>
+                                </div>
+                            `}
+
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-start justify-between gap-2 mb-2">
+                                    <h3 class="font-bold text-gray-900 text-lg">${novel.title}</h3>
+                                    ${statusBadge}
+                                </div>
+
+                                <div class="text-sm text-gray-600 space-y-1 mb-3">
+                                    <p><strong>Tác giả:</strong> ${novel.author_name}</p>
+                                    ${novel.editor_name ? `<p><strong>Editor/Dịch giả:</strong> ${novel.editor_name}</p>` : ''}
+                                    <p><strong>Số chương:</strong> ${novel.chapter_count || 0}${novel.extra_chapters ? ` + ${novel.extra_chapters} ngoại truyện` : ''}</p>
+                                    <p><strong>Ngày tải lên:</strong> ${createdDate}</p>
+                                    <p><strong>Đánh giá:</strong> ⭐ ${novel.avg_rating ? novel.avg_rating.toFixed(1) : '0.0'} (${novel.rating_count || 0} lượt)</p>
+                                </div>
+
+                                <div class="flex gap-2">
+                                    <a href="upload.html?edit=${novel.id}"
+                                       class="text-blue-600 hover:text-blue-800 text-sm font-semibold">
+                                        ✏️ Chỉnh sửa
+                                    </a>
+                                    ${novel.novel_url ? `
+                                        <a href="${novel.novel_url}" target="_blank"
+                                           class="text-green-600 hover:text-green-800 text-sm font-semibold">
+                                            📖 Xem truyện
+                                        </a>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+// Get novel status badge
+function getNovelStatusBadge(isApproved, approvalStatus) {
+    if (isApproved) {
+        return '<span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold whitespace-nowrap">✅ Đã duyệt</span>';
+    } else if (approvalStatus === 'pending') {
+        return '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-semibold whitespace-nowrap">⏳ Chờ duyệt</span>';
+    } else if (approvalStatus === 'rejected') {
+        return '<span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold whitespace-nowrap">❌ Bị từ chối</span>';
+    }
+    return '<span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-semibold whitespace-nowrap">⏳ Chờ duyệt</span>';
 }
 
 // Load request history
@@ -370,12 +465,34 @@ function initEditUsername() {
     });
 }
 
+// =====================================================
+// HEADER SCROLL EFFECT
+// =====================================================
+
+function initHeaderScroll() {
+    const nav = document.querySelector('nav');
+    if (!nav) return;
+
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) {
+            nav.classList.add('scrolled');
+            nav.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
+            nav.style.backdropFilter = 'blur(10px)';
+        } else {
+            nav.classList.remove('scrolled');
+            nav.style.backgroundColor = 'white';
+            nav.style.backdropFilter = 'none';
+        }
+    });
+}
+
 // Initialize on page load
 async function initPage() {
     await init();
     if (currentUser && userProfile) {
         initEditUsername();
     }
+    initHeaderScroll();
 }
 
 if (document.readyState === 'loading') {

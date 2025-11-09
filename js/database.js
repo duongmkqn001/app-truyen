@@ -457,7 +457,7 @@ const db = {
                     .eq('is_approved', true)
                     .order('nomination_count', { ascending: false })
                     .limit(limit);
-                
+
                 if (error) throw error;
                 return { success: true, data };
             } catch (error) {
@@ -465,7 +465,24 @@ const db = {
                 return { success: false, error: error.message, data: [] };
             }
         },
-        
+
+        // Get novels created by a specific user (for translators/editors)
+        async getByCreator(userId) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('novels_with_stats')
+                    .select('*')
+                    .eq('created_by', userId)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                return { success: true, data };
+            } catch (error) {
+                console.error('Get novels by creator error:', error);
+                return { success: false, error: error.message, data: [] };
+            }
+        },
+
         // Create novel (requires authentication)
         async create(novelData) {
             try {
@@ -691,7 +708,7 @@ const db = {
             }
         },
 
-        // Update novel (admin only)
+        // Update novel (creator or admin can update)
         async update(novelId, updateData) {
             try {
                 const user = await db.auth.getCurrentUser();

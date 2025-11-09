@@ -130,7 +130,6 @@ function renderNovelsTable() {
         // Supabase data structure
         const title = novel.title;
         const author = novel.author_name;
-        const editor = novel.editor_name;
         const chapters = novel.chapter_count;
         const status = novel.status || 'ongoing';
         const lastUpdate = novel.updated_at
@@ -188,9 +187,6 @@ function renderNovelsTable() {
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm text-gray-700">${authorLink}</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-700">${editor}</div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                     ${genresHTML}
@@ -362,7 +358,38 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// ===== TABLE HEADER SCROLL EFFECT =====
+function initTableHeaderScroll() {
+    const tableContainer = document.querySelector('.table-container');
+    const tableHeader = document.querySelector('#novelTable thead');
+
+    if (!tableContainer || !tableHeader) return;
+
+    // Listen to scroll on the table container
+    tableContainer.addEventListener('scroll', () => {
+        if (tableContainer.scrollTop > 10) {
+            tableHeader.classList.add('scrolled');
+        } else {
+            tableHeader.classList.remove('scrolled');
+        }
+    });
+
+    // Also listen to window scroll
+    window.addEventListener('scroll', () => {
+        const rect = tableContainer.getBoundingClientRect();
+        // If table is scrolled past the top of viewport
+        if (rect.top < 0) {
+            tableHeader.classList.add('scrolled');
+        } else {
+            tableHeader.classList.remove('scrolled');
+        }
+    });
+}
+
 // ===== INITIALIZE APP =====
 // Load data when page loads
-document.addEventListener('DOMContentLoaded', loadData);
+document.addEventListener('DOMContentLoaded', () => {
+    loadData();
+    initTableHeaderScroll();
+});
 

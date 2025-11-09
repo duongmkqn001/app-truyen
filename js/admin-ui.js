@@ -561,6 +561,13 @@ async function editNovel(novelId) {
         console.log('Novel tags for editing:', selectedTags);
         renderEditTags(selectedTags);
 
+        // Initialize tag search
+        initEditTagSearch();
+
+        // Clear search input
+        const searchInput = document.getElementById('editTagSearch');
+        if (searchInput) searchInput.value = '';
+
         // Show modal
         document.getElementById('editNovelModal').classList.remove('hidden');
 
@@ -570,19 +577,30 @@ async function editNovel(novelId) {
     }
 }
 
-function renderEditTags(selectedTags) {
+function renderEditTags(selectedTags, searchQuery = '') {
     const container = document.getElementById('editTagsContainer');
 
     // Get selected tag IDs
     const selectedTagIds = selectedTags.map(t => t.id);
 
-    container.innerHTML = allTags.map(tag => {
+    // Filter tags based on search query
+    const filteredTags = searchQuery
+        ? allTags.filter(tag => tag.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        : allTags;
+
+    if (filteredTags.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-sm">Không tìm thấy thể loại nào</p>';
+        return;
+    }
+
+    container.innerHTML = filteredTags.map(tag => {
         const isSelected = selectedTagIds.includes(tag.id);
         return `
             <label class="inline-flex items-center mr-4 mb-2 cursor-pointer">
                 <input type="checkbox"
                        class="edit-tag-checkbox mr-2 rounded"
                        value="${tag.id}"
+                       data-tag-name="${tag.name}"
                        ${isSelected ? 'checked' : ''}>
                 <span class="px-3 py-1 rounded-full text-sm" style="background-color: ${tag.color}20; color: ${tag.color};">
                     ${tag.name}
@@ -590,6 +608,25 @@ function renderEditTags(selectedTags) {
             </label>
         `;
     }).join('');
+}
+
+// Add tag search functionality
+function initEditTagSearch() {
+    const searchInput = document.getElementById('editTagSearch');
+    if (!searchInput) return;
+
+    searchInput.addEventListener('input', (e) => {
+        const searchQuery = e.target.value.trim();
+
+        // Get currently selected tags
+        const selectedTagIds = Array.from(document.querySelectorAll('.edit-tag-checkbox:checked'))
+            .map(cb => cb.value);
+
+        const selectedTags = allTags.filter(tag => selectedTagIds.includes(tag.id));
+
+        // Re-render tags with search filter
+        renderEditTags(selectedTags, searchQuery);
+    });
 }
 
 function closeEditModal() {

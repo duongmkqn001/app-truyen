@@ -5,6 +5,8 @@
 let parsedCsvData = [];
 let allTags = [];
 let selectedTagIds = [];
+let editMode = false;
+let editingNovelId = null;
 
 // =====================================================
 // INITIALIZATION
@@ -17,6 +19,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     initManualUpload();
     initCsvUpload();
     initTagPicker();
+    initHeaderScroll();
+    await checkEditMode();
 });
 
 // =====================================================
@@ -214,6 +218,73 @@ function updateSelectedTagsDisplay() {
 }
 
 // =====================================================
+// EDIT MODE
+// =====================================================
+
+async function checkEditMode() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const novelId = urlParams.get('edit');
+
+    if (!novelId) return;
+
+    editMode = true;
+    editingNovelId = novelId;
+
+    // Update page title
+    document.querySelector('h1').textContent = '✏️ Chỉnh sửa truyện';
+
+    // Hide CSV tab in edit mode
+    document.getElementById('csvTab').style.display = 'none';
+
+    // Load novel data
+    showLoading();
+    const result = await db.novels.getById(novelId);
+    hideLoading();
+
+    if (!result.success || !result.data) {
+        UIComponents.showToast('Không thể tải thông tin truyện', 'error');
+        setTimeout(() => {
+            window.location.href = 'profile.html';
+        }, 2000);
+        return;
+    }
+
+    const novel = result.data;
+
+    // Check if user owns this novel
+    const user = await db.auth.getCurrentUser();
+    if (novel.created_by !== user.id) {
+        UIComponents.showToast('Bạn không có quyền chỉnh sửa truyện này', 'error');
+        setTimeout(() => {
+            window.location.href = 'profile.html';
+        }, 2000);
+        return;
+    }
+
+    // Populate form
+    const form = document.getElementById('manualUploadForm');
+    form.querySelector('[name="title"]').value = novel.title || '';
+    form.querySelector('[name="author_name"]').value = novel.author_name || '';
+    form.querySelector('[name="editor_name"]').value = novel.editor_name || '';
+    form.querySelector('[name="chapter_count"]').value = novel.chapter_count || 0;
+    form.querySelector('[name="extra_chapters"]').value = novel.extra_chapters || 0;
+    form.querySelector('[name="summary"]').value = novel.summary || '';
+    form.querySelector('[name="novel_url"]').value = novel.novel_url || '';
+    form.querySelector('[name="cover_image_url"]').value = novel.cover_image_url || '';
+    form.querySelector('[name="status"]').value = novel.status || 'Đang ra';
+
+    // Load tags
+    if (novel.tag_ids && novel.tag_ids.length > 0) {
+        selectedTagIds = novel.tag_ids;
+        updateSelectedTagsDisplay();
+    }
+
+    // Update submit button text
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.textContent = '💾 Lưu thay đổi';
+}
+
+// =====================================================
 // MANUAL UPLOAD
 // =====================================================
 
@@ -238,21 +309,31 @@ function initManualUpload() {
         };
 
         showLoading();
-        const result = await db.novels.create(novelData);
+
+        let result;
+        if (editMode && editingNovelId) {
+            // Update existing novel
+            result = await db.novels.update(editingNovelId, novelData);
+        } else {
+            // Create new novel
+            result = await db.novels.create(novelData);
+        }
+
         hideLoading();
 
         if (result.success) {
-            UIComponents.showToast('Tải lên thành công! ' + (result.needsApproval ? 'Truyện đang chờ duyệt.' : 'Truyện đã được duyệt.'), 'success');
-            form.reset();
-            selectedTagIds = [];
-            updateSelectedTagsDisplay();
+            const message = editMode
+                ? 'Cập nhật truyện thành công!'
+                : 'Tải lên thành công! ' + (result.needsApproval ? 'Truyện đang chờ duyệt.' : 'Truyện đã được duyệt.');
 
-            // Redirect to home after 2 seconds
+            UIComponents.showToast(message, 'success');
+
+            // Redirect after 2 seconds
             setTimeout(() => {
-                window.location.href = 'index.html';
+                window.location.href = editMode ? 'profile.html' : 'index.html';
             }, 2000);
         } else {
-            UIComponents.showToast(result.error || 'Không thể tải lên truyện', 'error');
+            UIComponents.showToast(result.error || 'Không thể lưu truyện', 'error');
         }
     });
 }
@@ -587,5 +668,26 @@ function showLoading() {
 
 function hideLoading() {
     document.getElementById('loadingOverlay').classList.add('hidden');
+}
+
+// =====================================================
+// HEADER SCROLL EFFECT
+// =====================================================
+
+function initHeaderScroll() {
+    const nav = document.querySelector('nav');
+    if (!nav) return;
+
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) {
+            nav.classList.add('scrolled');
+            nav.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
+            nav.style.backdropFilter = 'blur(10px)';
+        } else {
+            nav.classList.remove('scrolled');
+            nav.style.backgroundColor = 'white';
+            nav.style.backdropFilter = 'none';
+        }
+    });
 }
 

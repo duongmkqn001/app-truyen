@@ -494,7 +494,38 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// ===== TABLE HEADER SCROLL EFFECT =====
+function initTableHeaderScroll() {
+    const tableContainer = document.querySelector('.table-container');
+    const tableHeader = document.querySelector('#novelTable thead');
+
+    if (!tableContainer || !tableHeader) return;
+
+    // Listen to scroll on the table container
+    tableContainer.addEventListener('scroll', () => {
+        if (tableContainer.scrollTop > 10) {
+            tableHeader.classList.add('scrolled');
+        } else {
+            tableHeader.classList.remove('scrolled');
+        }
+    });
+
+    // Also listen to window scroll
+    window.addEventListener('scroll', () => {
+        const rect = tableContainer.getBoundingClientRect();
+        // If table is scrolled past the top of viewport
+        if (rect.top < 0) {
+            tableHeader.classList.add('scrolled');
+        } else {
+            tableHeader.classList.remove('scrolled');
+        }
+    });
+}
+
 // ===== INITIALIZE APP =====
 // Load data when page loads
-document.addEventListener('DOMContentLoaded', loadData);
+document.addEventListener('DOMContentLoaded', () => {
+    loadData();
+    initTableHeaderScroll();
+});
 

@@ -193,6 +193,12 @@ async function renderInfoTab() {
                         <h3 class="text-sm font-semibold text-gray-500 mb-1">Số chương</h3>
                         <p class="text-lg text-gray-900">${novel.chapter_count || 0}</p>
                     </div>
+                    ${novel.extra_chapters && novel.extra_chapters > 0 ? `
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 mb-1">Ngoại truyện</h3>
+                        <p class="text-lg text-gray-900">${novel.extra_chapters} chương</p>
+                    </div>
+                    ` : ''}
                     <div>
                         <h3 class="text-sm font-semibold text-gray-500 mb-1">Trạng thái</h3>
                         <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-${statusColor}-100 text-${statusColor}-800">
@@ -718,4 +724,8 @@ window.NovelModal = {
     open: openNovelModal,
     close: closeNovelModal
 };
+
+// Also export as global functions for backward compatibility
+window.openNovelModal = openNovelModal;
+window.closeNovelModal = closeNovelModal;
 
