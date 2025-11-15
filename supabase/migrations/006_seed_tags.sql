@@ -416,6 +416,7 @@ INSERT INTO tags (name, color) VALUES
     ('Ẩm thấp', '#78716C'),
     ('Bệnh kiều', '#7C2D12'),
     ('Ngạo kiều', '#F59E0B'),
+    ('Thiên chi kiêu tử', '#F59E0B'),
     ('Biệt nữu', '#EC4899'),
     ('Trung khuyển', '#A16207'),
     ('Chó săn', '#78716C'),

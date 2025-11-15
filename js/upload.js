@@ -185,10 +185,16 @@ function toggleTag(tagId, tagName, tagColor) {
     } else {
         // Add tag
         selectedTagIds.push(tagId);
+
+        // Clear search input after adding a tag
+        const searchInput = document.getElementById('tagSearchInput');
+        if (searchInput) {
+            searchInput.value = '';
+        }
     }
 
     updateSelectedTagsDisplay();
-    renderTagPickerList(document.getElementById('tagSearchInput').value.toLowerCase());
+    renderTagPickerList(''); // Always render with empty search after toggle
 
     // Update hidden input
     document.getElementById('tagIdsInput').value = selectedTagIds.join(',');
@@ -277,6 +283,7 @@ async function checkEditMode() {
     if (novel.tag_ids && novel.tag_ids.length > 0) {
         selectedTagIds = novel.tag_ids;
         updateSelectedTagsDisplay();
+        renderTagPickerList(); // Re-render picker to show selected tags
     }
 
     // Update submit button text

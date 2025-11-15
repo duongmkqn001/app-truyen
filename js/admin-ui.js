@@ -633,6 +633,25 @@ function renderEditTags(selectedTags, searchQuery = '') {
             </label>
         `;
     }).join('');
+
+    // Add event listeners to checkboxes to clear search after selection
+    container.querySelectorAll('.edit-tag-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            const searchInput = document.getElementById('editTagSearch');
+            if (searchInput && searchInput.value.trim() !== '') {
+                // Clear search input
+                searchInput.value = '';
+
+                // Get currently selected tags
+                const selectedTagIds = Array.from(document.querySelectorAll('.edit-tag-checkbox:checked'))
+                    .map(cb => cb.value);
+                const selectedTags = allTags.filter(tag => selectedTagIds.includes(tag.id));
+
+                // Re-render without search filter
+                renderEditTags(selectedTags, '');
+            }
+        });
+    });
 }
 
 // Add tag search functionality
