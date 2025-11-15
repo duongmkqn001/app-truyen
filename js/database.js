@@ -496,7 +496,8 @@ const db = {
                 let approvalStatus = 'pending';
                 let isApproved = false;
 
-                if (profile && (profile.role === 'translator' || profile.role === 'admin')) {
+                // Auto-approve for translators and all admin roles
+                if (profile && ['translator', 'admin', 'super_admin', 'sub_admin'].includes(profile.role)) {
                     approvalStatus = 'approved';
                     isApproved = true;
                 }

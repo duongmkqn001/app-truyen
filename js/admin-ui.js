@@ -155,8 +155,8 @@ async function loadPendingNovels() {
         <table class="min-w-full divide-y divide-green-100">
             <thead class="bg-green-50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Tên truyện</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Tác giả</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Ảnh bìa</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Thông tin truyện</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Người tải lên</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Ngày tải</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Hành động</th>
@@ -166,17 +166,42 @@ async function loadPendingNovels() {
                 ${result.data.map(novel => `
                     <tr class="hover:bg-green-50">
                         <td class="px-6 py-4">
-                            <div class="font-medium text-gray-900">${novel.title}</div>
-                            ${novel.summary ? `<div class="text-xs text-gray-500 mt-1 line-clamp-2 whitespace-pre-wrap">${novel.summary}</div>` : ''}
+                            ${novel.cover_image_url
+                                ? `<img src="${novel.cover_image_url}" alt="${novel.title}" class="w-16 h-24 object-cover rounded shadow-sm cursor-pointer" onclick="viewNovelDetail('${novel.id}')" onerror="this.src='https://via.placeholder.com/64x96?text=No+Image'">`
+                                : `<div class="w-16 h-24 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs">Không có ảnh</div>`
+                            }
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${novel.author_name}</td>
+                        <td class="px-6 py-4">
+                            <div class="font-semibold text-gray-900 mb-1">${novel.title}</div>
+                            <div class="text-sm text-gray-600 mb-1">
+                                <span class="font-medium">Tác giả:</span> ${novel.author_name}
+                                ${novel.editor_name ? ` | <span class="font-medium">Editor:</span> ${novel.editor_name}` : ''}
+                            </div>
+                            <div class="text-sm text-gray-600 mb-1">
+                                <span class="font-medium">Chương:</span> ${novel.chapter_count || 0}
+                                ${novel.extra_chapters ? ` + ${novel.extra_chapters} ngoại truyện` : ''}
+                                | <span class="font-medium">Tình trạng:</span> ${novel.status || 'Đang ra'}
+                            </div>
+                            ${novel.tag_names && novel.tag_names.length > 0 ? `
+                                <div class="flex flex-wrap gap-1 mt-2">
+                                    ${novel.tag_names.map((tag, idx) => `
+                                        <span class="px-2 py-0.5 text-xs rounded-full bg-${novel.tag_colors?.[idx] || 'gray'}-100 text-${novel.tag_colors?.[idx] || 'gray'}-700">
+                                            ${tag}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                            <button onclick="viewNovelDetail('${novel.id}')" class="mt-2 text-xs text-blue-600 hover:text-blue-800 underline">
+                                📖 Xem chi tiết đầy đủ
+                            </button>
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${novel.creator_username || 'N/A'}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${new Date(novel.created_at).toLocaleDateString('vi-VN')}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <button onclick="approveNovel('${novel.id}')" class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg mr-2">
+                            <button onclick="approveNovel('${novel.id}')" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg mr-2 mb-1 block w-full">
                                 ✓ Duyệt
                             </button>
-                            <button onclick="rejectNovel('${novel.id}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg">
+                            <button onclick="rejectNovel('${novel.id}')" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg block w-full">
                                 ✗ Từ chối
                             </button>
                         </td>
@@ -676,6 +701,162 @@ document.getElementById('editNovelForm').addEventListener('submit', async (e) =>
 // Make editNovel function global
 window.editNovel = editNovel;
 window.closeEditModal = closeEditModal;
+
+// =====================================================
+// NOVEL DETAIL MODAL
+// =====================================================
+
+async function viewNovelDetail(novelId) {
+    showLoading();
+    const result = await db.novels.getById(novelId);
+    hideLoading();
+
+    if (!result.success || !result.data) {
+        showMessage('Không thể tải thông tin truyện', true);
+        return;
+    }
+
+    const novel = result.data;
+
+    // Create modal HTML
+    const modalHTML = `
+        <div id="novelDetailModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onclick="closeNovelDetailModal(event)">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+                <!-- Header -->
+                <div class="sticky top-0 bg-gradient-to-r from-green-600 to-green-700 text-white p-6 rounded-t-2xl">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h2 class="text-2xl font-bold mb-2">${novel.title}</h2>
+                            <p class="text-green-100">Chi tiết truyện chờ duyệt</p>
+                        </div>
+                        <button onclick="closeNovelDetailModal()" class="text-white hover:text-gray-200 text-2xl font-bold">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="p-6">
+                    <!-- Cover Image and Basic Info -->
+                    <div class="flex gap-6 mb-6">
+                        <div class="flex-shrink-0">
+                            ${novel.cover_image_url
+                                ? `<img src="${novel.cover_image_url}" alt="${novel.title}" class="w-48 h-72 object-cover rounded-lg shadow-lg" onerror="this.src='https://via.placeholder.com/192x288?text=No+Image'">`
+                                : `<div class="w-48 h-72 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400">Không có ảnh bìa</div>`
+                            }
+                        </div>
+                        <div class="flex-1">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-sm font-semibold text-gray-600">Tác giả</label>
+                                    <p class="text-gray-900">${novel.author_name}</p>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-semibold text-gray-600">Editor/Dịch giả</label>
+                                    <p class="text-gray-900">${novel.editor_name || 'Không có'}</p>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-semibold text-gray-600">Số chương</label>
+                                    <p class="text-gray-900">${novel.chapter_count || 0} chương</p>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-semibold text-gray-600">Ngoại truyện</label>
+                                    <p class="text-gray-900">${novel.extra_chapters || 0} chương</p>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-semibold text-gray-600">Tình trạng</label>
+                                    <p class="text-gray-900">${novel.status || 'Đang ra'}</p>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-semibold text-gray-600">Người tải lên</label>
+                                    <p class="text-gray-900">${novel.creator_username || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-semibold text-gray-600">Ngày tải lên</label>
+                                    <p class="text-gray-900">${new Date(novel.created_at).toLocaleString('vi-VN')}</p>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-semibold text-gray-600">Link truyện</label>
+                                    ${novel.novel_url
+                                        ? `<a href="${novel.novel_url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline break-all">Xem truyện</a>`
+                                        : `<p class="text-gray-500">Không có</p>`
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tags -->
+                    ${novel.tag_names && novel.tag_names.length > 0 ? `
+                        <div class="mb-6">
+                            <label class="text-sm font-semibold text-gray-600 block mb-2">Thể loại</label>
+                            <div class="flex flex-wrap gap-2">
+                                ${novel.tag_names.map((tag, idx) => `
+                                    <span class="px-3 py-1 rounded-full bg-${novel.tag_colors?.[idx] || 'gray'}-100 text-${novel.tag_colors?.[idx] || 'gray'}-700 font-medium">
+                                        ${tag}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Summary -->
+                    <div class="mb-6">
+                        <label class="text-sm font-semibold text-gray-600 block mb-2">Tóm tắt</label>
+                        <div class="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
+                            ${novel.summary
+                                ? `<p class="text-gray-700 whitespace-pre-wrap">${novel.summary}</p>`
+                                : `<p class="text-gray-400 italic">Không có tóm tắt</p>`
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-3 pt-4 border-t border-gray-200">
+                        <button onclick="approveNovelFromModal('${novel.id}')" class="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors">
+                            ✓ Duyệt truyện
+                        </button>
+                        <button onclick="rejectNovelFromModal('${novel.id}')" class="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors">
+                            ✗ Từ chối
+                        </button>
+                        <button onclick="closeNovelDetailModal()" class="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold rounded-lg transition-colors">
+                            Đóng
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function closeNovelDetailModal(event) {
+    // Only close if clicking the backdrop or close button
+    if (event && event.target.id !== 'novelDetailModal') return;
+
+    const modal = document.getElementById('novelDetailModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+async function approveNovelFromModal(novelId) {
+    await approveNovel(novelId);
+    closeNovelDetailModal();
+}
+
+async function rejectNovelFromModal(novelId) {
+    await rejectNovel(novelId);
+    closeNovelDetailModal();
+}
+
+// Make functions globally available
+window.viewNovelDetail = viewNovelDetail;
+window.closeNovelDetailModal = closeNovelDetailModal;
+window.approveNovelFromModal = approveNovelFromModal;
+window.rejectNovelFromModal = rejectNovelFromModal;
 
 // Initialize
 (async () => {
